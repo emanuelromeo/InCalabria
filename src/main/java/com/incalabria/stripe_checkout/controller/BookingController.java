@@ -58,18 +58,9 @@ public class BookingController {
         metadata.put("experience", booking.getExperience());
         metadata.put("participants", String.valueOf(booking.getParticipantsNumber()));
         metadata.put("date", booking.getDatePc() != null ? booking.getDatePc() : booking.getDateMobile());
-
-        if (booking.getPrivacy() != null) {
-            metadata.put("privacy", booking.getPrivacy());
-        }
-
-        if (booking.getPrivacy() != null) {
-            metadata.put("needs", booking.getNeeds());
-        }
-
-        if (!booking.getOptionals().isEmpty()) {
-            metadata.put("optionals", booking.getOptionals().toString());
-        }
+        metadata.put("privacy", booking.getPrivacy());
+        metadata.put("needs", booking.getNeeds());
+        metadata.put("optionals", booking.getOptionals().toString());
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .addLineItem(lineItem)

@@ -79,16 +79,26 @@ public class StripeWebhookController {
 
             StringBuilder emailText = new StringBuilder();
             emailText.append("Session ID: ").append(sessionId).append("\n");
-            emailText.append("Customer email: " ).append(customerEmail).append("\n");
-            emailText.append("Customer phone: " ).append(customerPhone).append("\n");
+            emailText.append("Customer email: ").append(customerEmail).append("\n");
+            emailText.append("Customer phone: ").append(customerPhone).append("\n");
             emailText.append("Customer name: ").append(customerName).append("\n");
             emailText.append("Experience: ").append(experience).append("\n");
             emailText.append("Participants: ").append(participants).append("\n");
             emailText.append("Date: ").append(date).append("\n");
-            emailText.append("Privacy: ").append(privacy).append("\n");
-            emailText.append("Optionals: ").append(optionals).append("\n");
-            emailText.append("Needs: ").append(needs).append("\n");
-            emailText.append("Total: ").append(session.getAmountTotal() / 100);
+
+            if (privacy != null) {
+                emailText.append("Privacy: ").append(privacy).append("\n");
+            }
+
+            if (optionals != null) {
+                emailText.append("Optionals: ").append(optionals).append("\n");
+            }
+
+            if (needs != null && !needs.isEmpty()) {
+                emailText.append("Needs: ").append(needs).append("\n");
+            }
+
+            emailText.append("Total: ").append(session.getAmountTotal() / 100).append("€");
 
             try {
                 sendGridEmailService.sendEmail(emailTo, "Pagamento autorizzato", emailText.toString());
