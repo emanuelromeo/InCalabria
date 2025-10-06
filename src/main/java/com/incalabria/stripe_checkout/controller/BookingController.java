@@ -31,13 +31,17 @@ public class BookingController {
     @PostMapping("/create-checkout-session")
     public ResponseEntity<Map<String, String>> createCheckoutSession(@RequestBody BookingDto booking) throws StripeException {
 
+        long amountInCents = (long) (booking.getAmount() * 100);
+
         SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
                 .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                         .setCurrency("eur")
                         .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                 .setName(booking.getExperience())
+                                .setDescription(String.valueOf(booking))
+                                .addImage(booking.getImage())
                                 .build())
-                        .setUnitAmount(booking.getAmountInCents())
+                        .setUnitAmount(amountInCents)
                         .build())
                 .setQuantity(1L)
                 .build();
@@ -50,12 +54,22 @@ public class BookingController {
         String cancelUrl = appDomain + "/cancel";
 
         Map<String, String> metadata = new HashMap<>();
+
         metadata.put("experience", booking.getExperience());
         metadata.put("participants", String.valueOf(booking.getParticipantsNumber()));
-        metadata.put("date", booking.getDate()); // Assicurati che date sia in formato ISO o stringa compatibile
-        metadata.put("privacy", booking.getPrivacy());
-        metadata.put("needs", booking.getNeeds());
-        metadata.put("optionals", booking.getOptionals() != null ? String.join(", ", booking.getOptionals()) : "");
+        metadata.put("date", booking.getDatePc() != null ? booking.getDatePc() : booking.getDateMobile());
+
+        if (booking.getPrivacy() != null) {
+            metadata.put("privacy", booking.getPrivacy());
+        }
+
+        if (booking.getPrivacy() != null) {
+            metadata.put("needs", booking.getNeeds());
+        }
+
+        if (!booking.getOptionals().isEmpty()) {
+            metadata.put("optionals", booking.getOptionals().toString());
+        }
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .addLineItem(lineItem)
@@ -74,16 +88,34 @@ public class BookingController {
     }
 
     @PostMapping("/capture-payment-intent/{sessionId}")
-    public ResponseEntity<String> capturePaymentIntent(@PathVariable String sessionId) throws StripeException {
-        PaymentIntent paymentIntent = PaymentIntent.retrieve(getPaymentIntent(sessionId));
-        paymentIntent.capture(PaymentIntentCaptureParams.builder().build());
+    public ResponseEntity<String> capturePaymentIntent(@PathVariable String sessionId) {
+        PaymentIntent paymentIntent = null;
+        try {
+            paymentIntent = PaymentIntent.retrieve(getPaymentIntent(sessionId));
+        } catch (StripeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+        try {
+            paymentIntent.capture(PaymentIntentCaptureParams.builder().build());
+        } catch (StripeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
         return ResponseEntity.ok("PaymentIntent captured successfully.");
     }
 
     @PostMapping("/cancel-payment-intent/{sessionId}")
-    public ResponseEntity<String> cancelPaymentIntent(@PathVariable String sessionId) throws StripeException {
-        PaymentIntent paymentIntent = PaymentIntent.retrieve(getPaymentIntent(sessionId));
-        paymentIntent.cancel();
+    public ResponseEntity<String> cancelPaymentIntent(@PathVariable String sessionId) {
+        PaymentIntent paymentIntent = null;
+        try {
+            paymentIntent = PaymentIntent.retrieve(getPaymentIntent(sessionId));
+        } catch (StripeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+        try {
+            paymentIntent.cancel();
+        } catch (StripeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
         return ResponseEntity.ok("PaymentIntent cancelled successfully.");
     }
 

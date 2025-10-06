@@ -66,7 +66,6 @@ public class StripeWebhookController {
 
             Map<String, String> metadata = session.getMetadata();
 
-            // Esempio: recupera i tuoi campi custom
             String experience = metadata.get("experience");
             String participants = metadata.get("participants");
             String date = metadata.get("date");
@@ -84,7 +83,8 @@ public class StripeWebhookController {
             emailText.append("Date: ").append(date).append("\n");
             emailText.append("Privacy: ").append(privacy).append("\n");
             emailText.append("Optionals: ").append(optionals).append("\n");
-            emailText.append("Needs: ").append(needs);
+            emailText.append("Needs: ").append(needs).append("\n");
+            emailText.append("Total: ").append(session.getAmountTotal() / 100);
 
             sendNotificationEmail(emailTo, emailText.toString());
         }
