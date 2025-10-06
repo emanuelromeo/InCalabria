@@ -39,12 +39,14 @@ public class StripeWebhookController {
     public ResponseEntity<String> handleStripeWebhook(@RequestBody String payload,
                                                       @RequestHeader("Stripe-Signature") String sigHeader) {
 
+        log.info("Stripe Webhook received");
         String endpointSecret = stripeProperties.getWebhook().getSecret();
         Event event;
 
         try {
             event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
         } catch (SignatureVerificationException e) {
+            log.error(e.getMessage());
             return ResponseEntity.status(400).body("Invalid signature");
         }
 
@@ -86,6 +88,7 @@ public class StripeWebhookController {
             emailText.append("Needs: ").append(needs).append("\n");
             emailText.append("Total: ").append(session.getAmountTotal() / 100);
 
+            log.info("Sending email...");
             sendNotificationEmail(emailTo, emailText.toString());
         }
 
