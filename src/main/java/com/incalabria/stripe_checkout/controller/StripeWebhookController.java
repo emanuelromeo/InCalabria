@@ -45,6 +45,7 @@ public class StripeWebhookController {
 
         try {
             event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
+            log.info("Event: " + event);
         } catch (SignatureVerificationException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(400).body("Invalid signature");
