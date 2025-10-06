@@ -2,6 +2,7 @@ package com.incalabria.stripe_checkout.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.incalabria.stripe_checkout.config.StripeProperties;
+import com.incalabria.stripe_checkout.service.SendGridEmailService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
@@ -15,6 +16,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -23,16 +25,16 @@ public class StripeWebhookController {
 
     private static final Logger log = LoggerFactory.getLogger(StripeWebhookController.class);
     private final StripeProperties stripeProperties;
-    private final JavaMailSender emailSender;
     private final String emailTo;
+    private final SendGridEmailService sendGridEmailService;
 
     @Autowired
     public StripeWebhookController(StripeProperties stripeProperties,
-                                   JavaMailSender emailSender,
-                                   @Value("${email.to}") String emailTo) {
+                                   @Value("${email.to}") String emailTo,
+                                   SendGridEmailService sendGridEmailService) {
         this.stripeProperties = stripeProperties;
-        this.emailSender = emailSender;
         this.emailTo = emailTo;
+        this.sendGridEmailService = sendGridEmailService;
     }
 
     @PostMapping("/webhook")
@@ -56,7 +58,6 @@ public class StripeWebhookController {
 
             String sessionId = session.getId();
 
-            // Estrai dati da customer_details
             String customerEmail = null;
             String customerPhone = null;
             String customerName = null;
@@ -89,18 +90,15 @@ public class StripeWebhookController {
             emailText.append("Needs: ").append(needs).append("\n");
             emailText.append("Total: ").append(session.getAmountTotal() / 100);
 
-            log.info("Sending email...");
-            sendNotificationEmail(emailTo, emailText.toString());
+            try {
+                sendGridEmailService.sendEmail(emailTo, "Pagamento autorizzato", emailText.toString());
+                log.info("Email successfully sent!");
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
         }
 
         return ResponseEntity.ok("Webhook received");
     }
 
-    private void sendNotificationEmail(String to, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject("Pagamento autorizzato");
-        message.setText(text);
-        emailSender.send(message);
-    }
 }

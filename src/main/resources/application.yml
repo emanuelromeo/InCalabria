@@ -1,22 +1,12 @@
 spring:
   application:
     name: stripe-checkout
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: near.app.info@gmail.com
-    password: opgp bozt mtmw ezys
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls.enable: true
 
 stripe:
   api:
-    secret-key: sk_test_51PTS8HLAayUIdszrN9BNSnVQQxQVXZHP0XBzR1O4fALARBpQegHJaQNtvu6J8l8RHe4dfoDE1E8wG7voMmWJMgi400xL8rmzSn
+    secret-key: ${STRIPE_API_SECRET_KEY}
   webhook:
-    secret: whsec_lLyVKkVXoDA3oVGmv2qUkYHxFr19SNUT
+    secret: ${STRIPE_WEBHOOK_SECRET}
 
 app:
   domain: https://incalabria.net
