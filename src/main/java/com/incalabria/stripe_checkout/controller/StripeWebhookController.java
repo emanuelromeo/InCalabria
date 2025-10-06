@@ -86,11 +86,11 @@ public class StripeWebhookController {
             emailText.append("Participants: ").append(participants).append("\n");
             emailText.append("Date: ").append(date).append("\n");
 
-            if (privacy != null) {
+            if (privacy != null && !privacy.isEmpty()) {
                 emailText.append("Privacy: ").append(privacy).append("\n");
             }
 
-            if (optionals != null) {
+            if (optionals != null && !optionals.isEmpty()) {
                 emailText.append("Optionals: ").append(optionals).append("\n");
             }
 
