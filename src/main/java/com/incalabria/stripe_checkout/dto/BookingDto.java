@@ -181,11 +181,11 @@ public class BookingDto {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Data: ");
         stringBuilder.append(datePc != null ? datePc : dateMobile);
-        stringBuilder.append(" | Ora: ").append(time);
+        stringBuilder.append(" | Ora: ").append(time.equals("morning") ? "mattina" : time.equals("afternoon") ? "pomeriggio" : "errore");
         stringBuilder.append(" | Numero di partecipanti: ").append(participantsNumber);
 
         if (privacy != null) {
-            stringBuilder.append(" | Privacy: ").append(privacy);
+            stringBuilder.append(" | Privacy: ").append(privacy.equals("public") ? "pubblica" : time.equals("private") ? "privata" : "errore");
         }
 
         if (!getOptionals().isEmpty()) {
