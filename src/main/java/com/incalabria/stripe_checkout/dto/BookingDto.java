@@ -185,7 +185,7 @@ public class BookingDto {
         stringBuilder.append(" | Numero di partecipanti: ").append(participantsNumber);
 
         if (privacy != null) {
-            stringBuilder.append(" | Privacy: ").append(privacy.equals("public") ? "pubblica" : time.equals("private") ? "privata" : "errore");
+            stringBuilder.append(" | Privacy: ").append(privacy.equals("public") ? "pubblica" : privacy.equals("private") ? "privata" : "errore");
         }
 
         if (!getOptionals().isEmpty()) {
