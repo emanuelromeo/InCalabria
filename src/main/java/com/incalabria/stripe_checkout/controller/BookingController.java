@@ -72,6 +72,9 @@ public class BookingController {
                 .setSuccessUrl(successUrl)
                 .setCancelUrl(cancelUrl)
                 .putAllMetadata(metadata)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.PAYPAL)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.KLARNA)
                 .build();
 
         Session session = Session.create(params);
