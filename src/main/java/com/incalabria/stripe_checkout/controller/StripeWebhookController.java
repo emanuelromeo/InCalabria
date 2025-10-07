@@ -90,7 +90,7 @@ public class StripeWebhookController {
                 emailText.append("Privacy: ").append(privacy).append("\n");
             }
 
-            if (optionals != null && !optionals.isEmpty()) {
+            if (optionals != null && !optionals.equals("[]")) {
                 emailText.append("Optionals: ").append(optionals).append("\n");
             }
 
