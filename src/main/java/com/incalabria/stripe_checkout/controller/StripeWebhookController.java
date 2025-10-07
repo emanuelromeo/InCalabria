@@ -73,6 +73,7 @@ public class StripeWebhookController {
             String experience = metadata.get("experience");
             String participants = metadata.get("participants");
             String date = metadata.get("date");
+            String time = metadata.get("time");
             String privacy = metadata.get("privacy");
             String optionals = metadata.get("optionals");
             String needs = metadata.get("needs");
@@ -85,6 +86,7 @@ public class StripeWebhookController {
             emailText.append("Experience: ").append(experience).append("\n");
             emailText.append("Participants: ").append(participants).append("\n");
             emailText.append("Date: ").append(date).append("\n");
+            emailText.append("Time: ").append(time).append("\n");
 
             if (privacy != null && !privacy.isEmpty()) {
                 emailText.append("Privacy: ").append(privacy).append("\n");

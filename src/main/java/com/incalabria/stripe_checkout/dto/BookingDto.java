@@ -10,6 +10,7 @@ public class BookingDto {
     private Integer participantsNumber;
     private String datePc;
     private String dateMobile;
+    private String time;
     private String privacy;
     private Boolean guide = false;
     private Boolean equipment = false;
@@ -26,6 +27,15 @@ public class BookingDto {
 
 
     // Metodi getter e setter
+
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
 
     public String getImage() {
         return image;
@@ -171,6 +181,7 @@ public class BookingDto {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Data: ");
         stringBuilder.append(datePc != null ? datePc : dateMobile);
+        stringBuilder.append(" | Ora: ").append(time);
         stringBuilder.append(" | Numero di partecipanti: ").append(participantsNumber);
 
         if (privacy != null) {

@@ -58,6 +58,7 @@ public class BookingController {
         metadata.put("experience", booking.getExperience());
         metadata.put("participants", String.valueOf(booking.getParticipantsNumber()));
         metadata.put("date", booking.getDatePc() != null ? booking.getDatePc() : booking.getDateMobile());
+        metadata.put("time", booking.getTime());
         metadata.put("privacy", booking.getPrivacy());
         metadata.put("needs", booking.getNeeds());
         metadata.put("optionals", booking.getOptionals().toString());
