@@ -42,7 +42,7 @@ public class BookingController {
                         .setCurrency("eur")
                         .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                 .setName(booking.getExperience())
-                                .setDescription(String.valueOf(booking))
+                                .setDescription(booking.getBookingDescription())
                                 .addImage(booking.getImage() != null && !booking.getImage().isEmpty() ? booking.getImage() : "https://ibb.co/mx5t3kD")
                                 .build())
                         .setUnitAmount(amountInCents)

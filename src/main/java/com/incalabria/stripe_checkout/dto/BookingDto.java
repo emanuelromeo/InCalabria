@@ -1,7 +1,6 @@
 package com.incalabria.stripe_checkout.dto;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class BookingDto {
@@ -173,11 +172,7 @@ public class BookingDto {
         return optionals;
     }
 
-
-    // To String
-
-    @Override
-    public String toString() {
+    public String getBookingDescription() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Data: ");
         stringBuilder.append(datePc != null ? datePc : dateMobile);
@@ -199,6 +194,27 @@ public class BookingDto {
         }
 
         return stringBuilder.toString();
+    }
+
+    @Override
+    public String toString() {
+        return "BookingDto{" +
+                "experience='" + experience + '\'' +
+                ", participantsNumber=" + participantsNumber +
+                ", datePc='" + datePc + '\'' +
+                ", dateMobile='" + dateMobile + '\'' +
+                ", time='" + time + '\'' +
+                ", privacy='" + privacy + '\'' +
+                ", guide=" + guide +
+                ", equipment=" + equipment +
+                ", transport=" + transport +
+                ", insurance=" + insurance +
+                ", lunch=" + lunch +
+                ", breakfast=" + breakfast +
+                ", needs='" + needs + '\'' +
+                ", amount=" + amount +
+                ", image='" + image + '\'' +
+                '}';
     }
 }
 
