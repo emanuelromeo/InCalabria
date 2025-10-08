@@ -104,6 +104,7 @@ public class StripeWebhookController {
 
             try {
                 sendGridEmailService.sendEmail(emailTo, "Pagamento autorizzato", emailText.toString());
+                log.info("InCalabria confirm email sent");
             } catch (IOException e) {
                 log.error("InCalabria confirm email error: " + e.getMessage());
             }
@@ -113,6 +114,7 @@ public class StripeWebhookController {
                     Write here...
                     """;
                 sendGridEmailService.sendEmail(customerEmail, "Pagamento autorizzato", customerEmailText);
+                log.info("Confirm email sent to: " + customerEmail);
             } catch (IOException e) {
                 log.error("Customer confirm email error: " + e.getMessage());
                 try {
