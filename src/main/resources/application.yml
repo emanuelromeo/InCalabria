@@ -8,8 +8,13 @@ stripe:
   webhook:
     secret: ${STRIPE_WEBHOOK_SECRET}
 
+sendgrid:
+  api:
+    key: ${SENDGRID_API_KEY}
 app:
   domain: https://incalabria.net
 
 email:
+  name: InCalabria
+  from: info@bearound.eu
   to: near.app.info@gmail.com

@@ -3,6 +3,7 @@ import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -11,16 +12,21 @@ import java.io.IOException;
 public class SendGridEmailService {
 
     private final SendGrid sendGrid;
+    private final Email fromEmail;
 
-    public SendGridEmailService() {
-        this.sendGrid = new SendGrid(System.getenv("SENDGRID_API_KEY"));
+    public SendGridEmailService(@Value("${sendgrid.api.key}") SendGrid sendGrid,
+                                @Value("${email.from}") String from,
+                                @Value("${email.name}") String name) {
+        this.sendGrid = sendGrid;
+        this.fromEmail = new Email(from, name);
     }
 
+
     public void sendEmail(String to, String subject, String body) throws IOException {
-        Email from = new Email("info@bearound.eu");
+
         Email toEmail = new Email(to);
         Content content = new Content("text/plain", body);
-        Mail mail = new Mail(from, subject, toEmail, content);
+        Mail mail = new Mail(fromEmail, subject, toEmail, content);
 
         Request request = new Request();
         request.setMethod(Method.POST);

@@ -80,9 +80,9 @@ public class StripeWebhookController {
 
             StringBuilder emailText = new StringBuilder();
             emailText.append("Session ID: ").append(sessionId).append("\n");
+            emailText.append("Customer name: ").append(customerName).append("\n");
             emailText.append("Customer email: ").append(customerEmail).append("\n");
             emailText.append("Customer phone: ").append(customerPhone).append("\n");
-            emailText.append("Customer name: ").append(customerName).append("\n");
             emailText.append("Experience: ").append(experience).append("\n");
             emailText.append("Participants: ").append(participants).append("\n");
             emailText.append("Date: ").append(date).append("\n");
@@ -104,9 +104,22 @@ public class StripeWebhookController {
 
             try {
                 sendGridEmailService.sendEmail(emailTo, "Pagamento autorizzato", emailText.toString());
-                log.info("Email successfully sent!");
             } catch (IOException e) {
-                log.error(e.getMessage());
+                log.error("InCalabria confirm email error: " + e.getMessage());
+            }
+
+            try {
+                String customerEmailText = """
+                    Write here...
+                    """;
+                sendGridEmailService.sendEmail(customerEmail, "Pagamento autorizzato", customerEmailText);
+            } catch (IOException e) {
+                log.error("Customer confirm email error: " + e.getMessage());
+                try {
+                    sendGridEmailService.sendEmail(emailTo, "Errore di invio email al cliente", e.getMessage());
+                } catch (IOException error) {
+                    log.error("InCalabria alert email error: " + error.getMessage());
+                }
             }
         }
 

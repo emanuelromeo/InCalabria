@@ -2,6 +2,7 @@ package com.incalabria.stripe_checkout.controller;
 
 import com.incalabria.stripe_checkout.config.StripeProperties;
 import com.incalabria.stripe_checkout.dto.BookingDto;
+import com.incalabria.stripe_checkout.service.SendGridEmailService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,11 +24,14 @@ import java.util.Map;
 public class BookingController {
 
     private static final Logger log = LoggerFactory.getLogger(BookingController.class);
+    private final SendGridEmailService sendGridEmailService;
     private final String appDomain;
 
     @Autowired
-    public BookingController(StripeProperties stripeProperties,
+    public BookingController(SendGridEmailService sendGridEmailService,
+                             StripeProperties stripeProperties,
                              @Value("${app.domain}") String appDomain) {
+        this.sendGridEmailService = sendGridEmailService;
         this.appDomain = appDomain;
         com.stripe.Stripe.apiKey = stripeProperties.getApi().getSecretKey();
     }
@@ -96,9 +101,20 @@ public class BookingController {
 
     @PostMapping("/capture-payment-intent/{sessionId}")
     public ResponseEntity<String> capturePaymentIntent(@PathVariable String sessionId) {
-        PaymentIntent paymentIntent = null;
+
+        Session session;
+        PaymentIntent paymentIntent;
+        String customerEmail;
+        String customerName;
+
         try {
-            paymentIntent = PaymentIntent.retrieve(getPaymentIntent(sessionId));
+            session = Session.retrieve(sessionId);
+        } catch (StripeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+
+        try {
+            paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
         } catch (StripeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
@@ -107,14 +123,40 @@ public class BookingController {
         } catch (StripeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
+
+        if (session.getCustomerDetails() != null) {
+            customerEmail = session.getCustomerDetails().getEmail();
+            customerName = session.getCustomerDetails().getName();
+
+            try {
+                String emailText = """
+                        Write here...
+                        """;
+                sendGridEmailService.sendEmail(customerEmail, "Pagamento confermato", emailText);
+            } catch (IOException e) {
+                return ResponseEntity.ok("PaymentIntent confirmed, but email couldn't be sent to customer");
+            }
+        }
+
         return ResponseEntity.ok("PaymentIntent captured successfully.");
     }
 
     @PostMapping("/cancel-payment-intent/{sessionId}")
     public ResponseEntity<String> cancelPaymentIntent(@PathVariable String sessionId) {
-        PaymentIntent paymentIntent = null;
+
+        Session session;
+        PaymentIntent paymentIntent;
+        String customerEmail;
+        String customerName;
+
         try {
-            paymentIntent = PaymentIntent.retrieve(getPaymentIntent(sessionId));
+            session = Session.retrieve(sessionId);
+        } catch (StripeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+
+        try {
+            paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
         } catch (StripeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
@@ -123,21 +165,22 @@ public class BookingController {
         } catch (StripeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
+
+        if (session.getCustomerDetails() != null) {
+            customerEmail = session.getCustomerDetails().getEmail();
+            customerName = session.getCustomerDetails().getName();
+
+            try {
+                String emailText = """
+                        Write here...
+                        """;
+                sendGridEmailService.sendEmail(customerEmail, "Pagamento rifiutato", emailText);
+            } catch (IOException e) {
+                return ResponseEntity.ok("PaymentIntent cancelled, but email couldn't be sent to customer");
+            }
+        }
+
         return ResponseEntity.ok("PaymentIntent cancelled successfully.");
     }
 
-//    @GetMapping("/retrieve-session/{sessionId}")
-//    public ResponseEntity<Map<String, Object>> getCheckoutSession(@PathVariable String sessionId) throws StripeException {
-//        Session session = Session.retrieve(sessionId);
-//        Map<String, Object> result = new HashMap<>();
-//        result.put("id", session.getId());
-//        result.put("paymentIntent", session.getPaymentIntent());
-//        result.put("metadata", session.getMetadata());
-//
-//        return ResponseEntity.ok(result);
-//    }
-
-    public String getPaymentIntent(String sessionId) throws StripeException {
-        return Session.retrieve(sessionId).getPaymentIntent();
-    }
 }
