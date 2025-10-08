@@ -43,7 +43,7 @@ public class BookingController {
                         .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                 .setName(booking.getExperience())
                                 .setDescription(booking.getBookingDescription())
-                                .addImage(booking.getImage() != null && !booking.getImage().isEmpty() ? booking.getImage() : "https://ibb.co/mx5t3kD")
+                                .addImage(booking.getImage() != null && !booking.getImage().isEmpty() ? booking.getImage() : "https://i.postimg.cc/nr4ccDXw/sun.png")
                                 .build())
                         .setUnitAmount(amountInCents)
                         .build())
