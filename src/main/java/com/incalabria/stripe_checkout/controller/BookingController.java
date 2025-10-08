@@ -109,18 +109,24 @@ public class BookingController {
 
         try {
             session = Session.retrieve(sessionId);
+            log.info("Session with ID " + sessionId + " successfully retrieved");
         } catch (StripeException e) {
+            log.error(e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());
         }
 
         try {
             paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
+            log.info("Payment Intent retrieved: " + paymentIntent);
         } catch (StripeException e) {
+            log.error(e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());
         }
         try {
             paymentIntent.capture(PaymentIntentCaptureParams.builder().build());
+            log.info("Payment Intent successfully captured");
         } catch (StripeException e) {
+            log.error(e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());
         }
 
@@ -133,7 +139,9 @@ public class BookingController {
                         Write here...
                         """;
                 sendGridEmailService.sendEmail(customerEmail, "Pagamento confermato", emailText);
+                log.info("Confirmation email sent to the customer");
             } catch (IOException e) {
+                log.error(e.getMessage());
                 return ResponseEntity.ok("PaymentIntent confirmed, but email couldn't be sent to customer");
             }
         }
@@ -151,18 +159,24 @@ public class BookingController {
 
         try {
             session = Session.retrieve(sessionId);
+            log.info("Session with ID " + sessionId + " successfully retrieved");
         } catch (StripeException e) {
+            log.error(e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());
         }
 
         try {
             paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
+            log.info("Payment Intent retrieved: " + paymentIntent);
         } catch (StripeException e) {
+            log.error(e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());
         }
         try {
             paymentIntent.cancel();
+            log.info("Payment Intent successfully cancelled");
         } catch (StripeException e) {
+            log.error(e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());
         }
 
@@ -175,7 +189,9 @@ public class BookingController {
                         Write here...
                         """;
                 sendGridEmailService.sendEmail(customerEmail, "Pagamento rifiutato", emailText);
+                log.info("Confirmation email sent to the customer");
             } catch (IOException e) {
+                log.error(e.getMessage());
                 return ResponseEntity.ok("PaymentIntent cancelled, but email couldn't be sent to customer");
             }
         }
