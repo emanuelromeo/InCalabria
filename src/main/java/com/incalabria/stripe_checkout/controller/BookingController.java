@@ -7,6 +7,8 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.PaymentIntentCaptureParams;
 import com.stripe.param.checkout.SessionCreateParams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import java.util.Map;
 @RequestMapping("/api")
 public class BookingController {
 
+    private static final Logger log = LoggerFactory.getLogger(BookingController.class);
     private final String appDomain;
 
     @Autowired
@@ -29,8 +32,9 @@ public class BookingController {
     }
 
     @PostMapping("/create-checkout-session")
-    public ResponseEntity<Map<String, String>> createCheckoutSession(@RequestBody BookingDto booking) throws StripeException {
+    public ResponseEntity<Map<String, String>> createCheckoutSession(@RequestBody BookingDto booking) {
 
+        log.info("Booking info:\n{}", booking);
         long amountInCents = (long) (booking.getAmount() * 100);
 
         SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
@@ -77,8 +81,16 @@ public class BookingController {
                 .addPaymentMethodType(SessionCreateParams.PaymentMethodType.KLARNA)
                 .build();
 
-        Session session = Session.create(params);
+        Session session = null;
+        try {
+            log.info("Building checkout session...");
+            session = Session.create(params);
+        } catch (StripeException e) {
+            log.error(e.getMessage());
+            ResponseEntity.status(500).body(e.getMessage());
+        }
 
+        log.info("Checkout session correctly built!");
         return ResponseEntity.ok(Map.of("url", session.getUrl()));
     }
 
