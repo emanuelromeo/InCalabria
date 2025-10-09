@@ -103,8 +103,6 @@ public class BookingController {
 
         Session session;
         PaymentIntent paymentIntent;
-        String customerEmail;
-        String customerName;
 
         try {
             session = Session.retrieve(sessionId);
@@ -130,14 +128,28 @@ public class BookingController {
         }
 
         if (session.getCustomerDetails() != null) {
-            customerEmail = session.getCustomerDetails().getEmail();
-            customerName = session.getCustomerDetails().getName();
+            String customerEmail = session.getCustomerDetails().getEmail();
+            String customerName = session.getCustomerDetails().getName();
+            double amount = (double) session.getAmountTotal() / 100;
+            String experience = session.getMetadata().get("experience");
 
             try {
-                String emailText = """
-                        Write here...
-                        """;
-                sendGridEmailService.sendEmail(customerEmail, "Pagamento confermato", emailText);
+                String emailText = String.format("""
+                    Ciao %s,
+                    
+                    siamo felici di confermare la tua prenotazione con InCalabria!
+                    Il pagamento di %.2f€ è andato a buon fine e la tua esperienza "%s" è ufficialmente prenotata.
+ 
+                    Nel frattempo, se hai domande o desideri personalizzare la tua esperienza, puoi
+                    contattarci rispondendo a questa mail o scrivendoci su whatsapp al numero
+                    +39 3333286692.
+                    
+                    Preparati a vivere la Calabria più autentica, tra mare, natura e tradizioni locali
+                    A presto,
+                    
+                    Il team di InCalabria
+                    """, customerName, amount, experience);
+                sendGridEmailService.sendEmail(customerEmail, "La tua esperienza InCalabria è stata confermata!", emailText);
                 log.info("Confirmation email sent to the customer");
             } catch (IOException e) {
                 log.error(e.getMessage());

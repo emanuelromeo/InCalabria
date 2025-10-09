@@ -88,19 +88,33 @@ public class StripeWebhookController {
             emailText.append("Date: ").append(date).append("\n");
             emailText.append("Time: ").append(time).append("\n");
 
+            String privacyEmailText = "";
+            String optionalsEmailText = "";
+            String needsEmailText = "";
+            String timeEmailText = time.equals("morning") ? "mattina" : time.equals("afternoon") ? "pomeriggio" : "?";
+
             if (privacy != null && !privacy.isEmpty()) {
                 emailText.append("Privacy: ").append(privacy).append("\n");
+                privacyEmailText = String.format("""
+                        • Privacy: %s
+                        """, privacy.equals("public") ? "pubblica" : privacy.equals("private") ? "privata" : "?");
             }
 
             if (optionals != null && !optionals.equals("[]")) {
                 emailText.append("Optionals: ").append(optionals).append("\n");
+                optionalsEmailText = String.format("""
+                        • Altre richieste: %s
+                        """, optionals.replace("[", "").replace("]",""));
             }
 
             if (needs != null && !needs.isEmpty()) {
                 emailText.append("Needs: ").append(needs).append("\n");
+                needsEmailText = String.format("""
+                        • Esigenze particolari: %s
+                        """, needs);
             }
 
-            emailText.append("Total: ").append(session.getAmountTotal() / 100).append("€");
+            emailText.append("Total: ").append(String.format("%.2f", (double) session.getAmountTotal() / 100)).append("€");
 
             try {
                 sendGridEmailService.sendEmail(emailTo, "Pagamento autorizzato", emailText.toString());
@@ -110,10 +124,28 @@ public class StripeWebhookController {
             }
 
             try {
-                String customerEmailText = """
-                    Write here...
-                    """;
-                sendGridEmailService.sendEmail(customerEmail, "Pagamento autorizzato", customerEmailText);
+                String customerEmailText = String.format("""
+                    Ciao %s,
+                    
+                    siamo felici di confermare la tua prenotazione con InCalabria!
+                    L'autorizzazione è andata a buon fine e la tua esperienza è ufficialmente prenotata.
+                    
+                    Dettagli dell’esperienza:
+                    • Nome: %s
+                    • Data: %s
+                    • Orario: %s
+                    • Numero di partecipanti: %s
+                    %s%s%s
+                    Nel frattempo, se hai domande o desideri personalizzare la tua esperienza, puoi
+                    contattarci rispondendo a questa mail o scrivendoci su whatsapp al numero
+                    +39 3333286692.
+                    
+                    Preparati a vivere la Calabria più autentica, tra mare, natura e tradizioni locali
+                    A presto,
+                    
+                    Il team di InCalabria
+                    """, customerName, experience, date, timeEmailText, participants, privacyEmailText, optionalsEmailText, needsEmailText);
+                sendGridEmailService.sendEmail(customerEmail, "La tua esperienza InCalabria è stata confermata!", customerEmailText);
                 log.info("Confirm email sent to: " + customerEmail);
             } catch (IOException e) {
                 log.error("Customer confirm email error: " + e.getMessage());
