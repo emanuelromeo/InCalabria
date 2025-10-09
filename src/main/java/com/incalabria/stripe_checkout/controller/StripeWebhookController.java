@@ -138,7 +138,7 @@ public class StripeWebhookController {
                     %s%s%s
                     Cosa succede adesso:
                     • La tua richiesta è in fase di approvazione.
-                    • Ti invieremo una mail di conferma appena l’esperienza sarà confermata e potrai procedere con il pagamento in modo sicuro.
+                    • Ti invieremo una mail di conferma appena l’esperienza sarà confermata e il pagamento verrà elaborato in modo sicuro.
                     • Nessun addebito verrà effettuato finché non riceverai la nostra conferma.
                     
                     Nel frattempo, se desideri modificare la data o hai domande sull’esperienza, puoi contattarci rispondendo a questa mail o scrivendoci su Whatsapp al numero +39 3333286692.
