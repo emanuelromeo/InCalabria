@@ -59,7 +59,7 @@ public class BookingController {
                 .build();
 
         String successUrl = appDomain + "/success";
-        String cancelUrl = appDomain + "/cancel";
+        String cancelUrl = appDomain + "/";
 
         Map<String, String> metadata = new HashMap<>();
 
@@ -138,18 +138,15 @@ public class BookingController {
                     Ciao %s,
                     
                     siamo felici di confermare la tua prenotazione con InCalabria!
-                    Il pagamento di %.2f€ è andato a buon fine e la tua esperienza "%s" è ufficialmente prenotata.
+                    il pagamento di %.2f€ è andato a buon fine e la tua esperienza "%s" è ufficialmente prenotata.
  
-                    Nel frattempo, se hai domande o desideri personalizzare la tua esperienza, puoi
-                    contattarci rispondendo a questa mail o scrivendoci su whatsapp al numero
-                    +39 3333286692.
+                    Nel frattempo, se hai domande o desideri personalizzare la tua esperienza, puoi contattarci rispondendo a questa mail o scrivendoci su whatsapp al numero +39 3333286692.
+                    Preparati a vivere la Calabria più autentica, tra mare, natura e tradizioni locali.
                     
-                    Preparati a vivere la Calabria più autentica, tra mare, natura e tradizioni locali
                     A presto,
-                    
                     Il team di InCalabria
                     """, customerName, amount, experience);
-                sendGridEmailService.sendEmail(customerEmail, "La tua esperienza InCalabria è stata confermata!", emailText);
+                sendGridEmailService.sendEmail(customerEmail, "La tua esperienza InCalabria è confermata!", emailText);
                 log.info("Confirmation email sent to the customer");
             } catch (IOException e) {
                 log.error(e.getMessage());
@@ -165,8 +162,6 @@ public class BookingController {
 
         Session session;
         PaymentIntent paymentIntent;
-        String customerEmail;
-        String customerName;
 
         try {
             session = Session.retrieve(sessionId);
@@ -192,14 +187,25 @@ public class BookingController {
         }
 
         if (session.getCustomerDetails() != null) {
-            customerEmail = session.getCustomerDetails().getEmail();
-            customerName = session.getCustomerDetails().getName();
+            String customerEmail = session.getCustomerDetails().getEmail();
+            String customerName = session.getCustomerDetails().getName();
+            String experience = session.getMetadata().get("experience");
 
             try {
-                String emailText = """
-                        Write here...
-                        """;
-                sendGridEmailService.sendEmail(customerEmail, "Pagamento rifiutato", emailText);
+                String emailText = String.format("""
+                        Ciao %s,
+                        
+                        ti ringraziamo per aver scelto InCalabria e per l’interesse verso le nostre esperienze.
+                        Purtroppo, in questo momento non siamo in grado di confermare la tua richiesta per l’esperienza "%s", a causa della mancanza di disponibilità.
+                        Siamo davvero spiacenti per l’inconveniente, ma ci auguriamo di poterti accogliere presto in un’altra delle nostre attività.
+                        
+                        Ti invitiamo a consultare il nostro sito www.incalabria.net per scoprire altre esperienze disponibili nelle stesse date o in periodi alternativi.
+                        Per qualsiasi dubbio o richiesta, puoi scriverci su Whatsapp al numero +39 3333286692, saremo felici di aiutarti a trovare un’alternativa.
+                        
+                        Grazie ancora per la fiducia,
+                        Il team di InCalabria
+                        """, customerName, experience);
+                sendGridEmailService.sendEmail(customerEmail, "Aggiornamento sulla tua richiesta di escursione in Calabria", emailText);
                 log.info("Confirmation email sent to the customer");
             } catch (IOException e) {
                 log.error(e.getMessage());

@@ -127,25 +127,27 @@ public class StripeWebhookController {
                 String customerEmailText = String.format("""
                     Ciao %s,
                     
-                    siamo felici di confermare la tua prenotazione con InCalabria!
-                    L'autorizzazione è andata a buon fine e la tua esperienza è ufficialmente prenotata.
+                    grazie per aver scelto InCalabria!
+                    Abbiamo ricevuto la tua richiesta di prenotazione e il nostro team la sta verificando.
                     
-                    Dettagli dell’esperienza:
-                    • Nome: %s
+                    Dettagli della richiesta:
+                    • Esperienza: %s
                     • Data: %s
                     • Orario: %s
                     • Numero di partecipanti: %s
                     %s%s%s
-                    Nel frattempo, se hai domande o desideri personalizzare la tua esperienza, puoi
-                    contattarci rispondendo a questa mail o scrivendoci su whatsapp al numero
-                    +39 3333286692.
+                    Cosa succede adesso:
+                    • La tua richiesta è in fase di approvazione.
+                    • Ti invieremo una mail di conferma appena l’esperienza sarà confermata e potrai procedere con il pagamento in modo sicuro.
+                    • Nessun addebito verrà effettuato finché non riceverai la nostra conferma.
                     
-                    Preparati a vivere la Calabria più autentica, tra mare, natura e tradizioni locali
+                    Nel frattempo, se desideri modificare la data o hai domande sull’esperienza, puoi contattarci rispondendo a questa mail o scrivendoci su Whatsapp al numero +39 3333286692.
+                    Non vediamo l’ora di farti vivere la Calabria più autentica tra natura e tradizioni.
+                    
                     A presto,
-                    
                     Il team di InCalabria
                     """, customerName, experience, date, timeEmailText, participants, privacyEmailText, optionalsEmailText, needsEmailText);
-                sendGridEmailService.sendEmail(customerEmail, "La tua esperienza InCalabria è stata confermata!", customerEmailText);
+                sendGridEmailService.sendEmail(customerEmail, "Abbiamo ricevuto la tua richiesta di esperienza in Calabria!", customerEmailText);
                 log.info("Confirm email sent to: " + customerEmail);
             } catch (IOException e) {
                 log.error("Customer confirm email error: " + e.getMessage());
