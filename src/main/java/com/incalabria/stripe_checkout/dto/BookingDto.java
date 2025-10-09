@@ -19,7 +19,6 @@ public class BookingDto {
     private Boolean breakfast = false;
     private String needs;
     private Double amount;
-    private String image;
 
     public BookingDto() {
     }
@@ -34,14 +33,6 @@ public class BookingDto {
 
     public void setTime(String time) {
         this.time = time;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
     }
 
     public Double getAmount() {
@@ -213,7 +204,6 @@ public class BookingDto {
                 ", breakfast=" + breakfast +
                 ", needs='" + needs + '\'' +
                 ", amount=" + amount +
-                ", image='" + image + '\'' +
                 '}';
     }
 }
