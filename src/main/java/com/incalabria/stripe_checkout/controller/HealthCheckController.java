@@ -16,7 +16,7 @@ public class HealthCheckController {
     @GetMapping
     public ResponseEntity<String> healthCheck() {
         log.info("Server is alive :)");
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Server is alive :)");
     }
 
 }
