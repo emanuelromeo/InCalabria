@@ -93,12 +93,6 @@ public class StripeWebhookController {
             String needsEmailText = "";
             String timeEmailText = time.equals("morning") ? "mattina" : time.equals("afternoon") ? "pomeriggio" : "?";
 
-            if (privacy != null && !privacy.isEmpty()) {
-                emailText.append("Privacy: ").append(privacy).append("\n");
-                privacyEmailText = String.format("""
-                        • Privacy: %s
-                        """, privacy.equals("public") ? "pubblica" : privacy.equals("private") ? "privata" : "?");
-            }
 
             if (optionals != null && !optionals.equals("[]")) {
                 emailText.append("Optionals: ").append(optionals).append("\n");

@@ -10,7 +10,6 @@ public class BookingDto {
     private String datePc;
     private String dateMobile;
     private String time;
-    private String privacy;
     private Boolean guide = false;
     private Boolean equipment = false;
     private Boolean transport = false;
@@ -73,14 +72,6 @@ public class BookingDto {
 
     public void setDateMobile(String dateMobile) {
         this.dateMobile = dateMobile;
-    }
-
-    public String getPrivacy() {
-        return privacy;
-    }
-
-    public void setPrivacy(String privacy) {
-        this.privacy = privacy;
     }
 
     public Boolean getGuide() {
@@ -170,10 +161,6 @@ public class BookingDto {
         stringBuilder.append(" | Ora: ").append(time.equals("morning") ? "mattina" : time.equals("afternoon") ? "pomeriggio" : "errore");
         stringBuilder.append(" | Numero di partecipanti: ").append(participantsNumber);
 
-        if (privacy != null) {
-            stringBuilder.append(" | Privacy: ").append(privacy.equals("public") ? "pubblica" : privacy.equals("private") ? "privata" : "errore");
-        }
-
         if (!getOptionals().isEmpty()) {
             stringBuilder.append(" | Altre richieste:");
             getOptionals().forEach(optional -> stringBuilder.append(" ").append(optional).append(","));
@@ -195,7 +182,6 @@ public class BookingDto {
                 ", datePc='" + datePc + '\'' +
                 ", dateMobile='" + dateMobile + '\'' +
                 ", time='" + time + '\'' +
-                ", privacy='" + privacy + '\'' +
                 ", guide=" + guide +
                 ", equipment=" + equipment +
                 ", transport=" + transport +
