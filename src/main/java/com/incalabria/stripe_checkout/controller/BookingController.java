@@ -69,6 +69,7 @@ public class BookingController {
         metadata.put("time", booking.getTime());
         metadata.put("needs", booking.getNeeds());
         metadata.put("optionals", booking.getOptionals().toString());
+        metadata.put("pickup", booking.getPickup());
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .addLineItem(lineItem)

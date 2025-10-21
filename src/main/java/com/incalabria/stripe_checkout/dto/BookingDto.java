@@ -16,6 +16,7 @@ public class BookingDto {
     private Boolean insurance = false;
     private Boolean lunch = false;
     private Boolean breakfast = false;
+    private String pickup;
     private String needs;
     private Double amount;
 
@@ -25,6 +26,13 @@ public class BookingDto {
 
     // Metodi getter e setter
 
+    public String getPickup() {
+        return pickup;
+    }
+
+    public void setPickup(String pickup) {
+        this.pickup = pickup;
+    }
 
     public String getTime() {
         return time;
@@ -188,6 +196,7 @@ public class BookingDto {
                 ", insurance=" + insurance +
                 ", lunch=" + lunch +
                 ", breakfast=" + breakfast +
+                ", pickup='" + pickup + '\'' +
                 ", needs='" + needs + '\'' +
                 ", amount=" + amount +
                 '}';

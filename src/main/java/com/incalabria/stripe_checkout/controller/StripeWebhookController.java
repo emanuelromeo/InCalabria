@@ -74,19 +74,20 @@ public class StripeWebhookController {
             String participants = metadata.get("participants");
             String date = metadata.get("date");
             String time = metadata.get("time");
-            String privacy = metadata.get("privacy");
             String optionals = metadata.get("optionals");
             String needs = metadata.get("needs");
+            String pickup = metadata.get("pickup");
 
-            StringBuilder emailText = new StringBuilder();
-            emailText.append("Session ID: ").append(sessionId).append("\n");
-            emailText.append("Customer name: ").append(customerName).append("\n");
-            emailText.append("Customer email: ").append(customerEmail).append("\n");
-            emailText.append("Customer phone: ").append(customerPhone).append("\n");
-            emailText.append("Experience: ").append(experience).append("\n");
-            emailText.append("Participants: ").append(participants).append("\n");
-            emailText.append("Date: ").append(date).append("\n");
-            emailText.append("Time: ").append(time).append("\n");
+            StringBuilder adminEmailText = new StringBuilder();
+            adminEmailText.append("Session ID: ").append(sessionId).append("\n");
+            adminEmailText.append("Customer name: ").append(customerName).append("\n");
+            adminEmailText.append("Customer email: ").append(customerEmail).append("\n");
+            adminEmailText.append("Customer phone: ").append(customerPhone).append("\n");
+            adminEmailText.append("Experience: ").append(experience).append("\n");
+            adminEmailText.append("Participants: ").append(participants).append("\n");
+            adminEmailText.append("Date: ").append(date).append("\n");
+            adminEmailText.append("Time: ").append(time).append("\n");
+            adminEmailText.append("Pickup: ").append(pickup).append("\n");
 
             String privacyEmailText = "";
             String optionalsEmailText = "";
@@ -95,23 +96,23 @@ public class StripeWebhookController {
 
 
             if (optionals != null && !optionals.equals("[]")) {
-                emailText.append("Optionals: ").append(optionals).append("\n");
+                adminEmailText.append("Optionals: ").append(optionals).append("\n");
                 optionalsEmailText = String.format("""
                         • Altre richieste: %s
                         """, optionals.replace("[", "").replace("]",""));
             }
 
             if (needs != null && !needs.isEmpty()) {
-                emailText.append("Needs: ").append(needs).append("\n");
+                adminEmailText.append("Needs: ").append(needs).append("\n");
                 needsEmailText = String.format("""
                         • Esigenze particolari: %s
                         """, needs);
             }
 
-            emailText.append("Total: ").append(String.format("%.2f", (double) session.getAmountTotal() / 100)).append("€");
+            adminEmailText.append("Total: ").append(String.format("%.2f", (double) session.getAmountTotal() / 100)).append("€");
 
             try {
-                sendGridEmailService.sendEmail(emailTo, "Pagamento autorizzato", emailText.toString());
+                sendGridEmailService.sendEmail(emailTo, "Pagamento autorizzato", adminEmailText.toString());
                 log.info("InCalabria confirm email sent");
             } catch (IOException e) {
                 log.error("InCalabria confirm email error: " + e.getMessage());
