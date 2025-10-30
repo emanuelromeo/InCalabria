@@ -31,21 +31,22 @@ public class GiftCardController {
 
     @GetMapping(value = "/image", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateGiftCardImage(
+            @RequestParam GiftCardType type,
             @RequestParam String recipient,
             @RequestParam String giftCardId,
             @RequestParam String message,
-            @RequestParam String sender,
-            @RequestParam String amount) throws IOException {
+            @RequestParam String sender) throws IOException {
 
         byte[] imageBytes = service.generateGiftCardImage(
-                recipient, giftCardId, message, sender, amount);
+                type, recipient, giftCardId, message, sender);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=giftcard_" + giftCardId + ".png")
+                        "inline; filename=giftcard_" + type.name().toLowerCase() + "_" + giftCardId + ".png")
                 .contentType(MediaType.IMAGE_PNG)
                 .body(imageBytes);
     }
+
 
 
 

@@ -1,6 +1,7 @@
 package com.incalabria.stripe_checkout.service;
 
 import com.incalabria.stripe_checkout.entity.GiftCard;
+import com.incalabria.stripe_checkout.enumeration.GiftCardType;
 import com.incalabria.stripe_checkout.repository.GiftCardRepository;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
@@ -39,33 +40,25 @@ public class GiftCardService {
         throw new IllegalStateException("Impossibile generare un codice giftcard unico");
     }
 
-    private static final String LOGO_URL = "https://i.postimg.cc/tTVJ85gh/In-Calabria-gold.png";
-
     public byte[] generateGiftCardImage(
+            GiftCardType type,
             String recipient,
             String giftCardId,
             String message,
-            String sender,
-            String amount) throws IOException {
+            String sender) throws IOException {
 
-        // HTML template
-        String html = buildHtml(recipient, giftCardId, message, sender, amount);
+        String html = buildHtml(type, recipient, giftCardId, message, sender);
 
-        // Genera screenshot con Playwright
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch();
             BrowserContext context = browser.newContext(
                     new Browser.NewContextOptions()
                             .setViewportSize(950, 1100)
             );
-
             Page page = context.newPage();
             page.setContent(html);
-
-            // Attendi che il logo sia caricato
             page.waitForLoadState(LoadState.NETWORKIDLE);
 
-            // Screenshota una specifica area
             byte[] screenshot = page.screenshot(new Page.ScreenshotOptions()
                     .setFullPage(true)
                     .setType(ScreenshotType.PNG)
@@ -78,7 +71,16 @@ public class GiftCardService {
         }
     }
 
-    private String buildHtml(String recipient, String giftCardId, String message, String sender, String amount) {
+    private String buildHtml(GiftCardType type, String recipient, String giftCardId,
+                             String message, String sender) {
+        String textShadow = "";
+        String textStyle = "color: " + type.getTextBackgroundColor() + ";";
+
+        if (type.hasInnerShadow()) {
+            textShadow = "text-shadow: 0px 4px 4px " + type.getShadowColor() + ", 0 0 0 " + type.getTextBackgroundColor() + ";";
+            textStyle = "color: rgba(0,0,0,0);";
+        }
+
         return """
 <!DOCTYPE html>
 <html lang="en">
@@ -108,7 +110,7 @@ public class GiftCardService {
             width: 850px;
             height: 550px;
             border-radius: 30px;
-            background: linear-gradient(112.12deg, #8C7236 3%%, #B99645 18%%, #F6CD61 37%%, #BD9E40 55%%, #C19F47 77%%, #907A23 100%%);
+            background: linear-gradient(112.12deg, %s 3%%, %s 18%%, %s 37%%, %s 55%%, %s 77%%, %s 100%%);
             position: relative;
             display: flex;
             flex-direction: column;
@@ -130,10 +132,8 @@ public class GiftCardService {
         .recipient-name {
             font-size: 25px;
             font-weight: 400;
-            color: rgba(0,0,0,0);
-            text-shadow: 
-                0.05em 0.05em 0.05em rgba(185, 150, 69, 0.3),
-                0 0 0 #5d4b23;
+            %s
+            %s
             text-align: center;
         }
 
@@ -153,10 +153,8 @@ public class GiftCardService {
         .id-text {
             font-size: 25px;
             font-weight: 400;
-            color: rgba(0,0,0,0);
-            text-shadow: 
-                0.05em 0.05em 0.05em rgba(185, 150, 69, 0.3),
-                0 0 0 #5d4b23;
+            %s
+            %s
             text-align: center;
         }
 
@@ -174,10 +172,8 @@ public class GiftCardService {
             right: 50px;
             font-size: 50px;
             font-weight: 400;
-            color: rgba(0,0,0,0);
-            text-shadow: 
-                0.05em 0.05em 0.05em rgba(185, 150, 69, 0.3),
-                0 0 0 #5d4b23;
+            %s
+            %s
             text-align: right;
         }
 
@@ -188,10 +184,8 @@ public class GiftCardService {
             transform: translateX(-50%%);
             font-size: 25px;
             font-weight: 400;
-            color: rgba(0,0,0,0);
-            text-shadow: 
-                0.05em 0.05em 0.05em rgba(185, 150, 69, 0.3),
-                0 0 0 #5d4b23;
+            %s
+            %s
             text-align: center;
         }
 
@@ -219,10 +213,8 @@ public class GiftCardService {
             font-size: 25px;
             font-weight: 400;
             line-height: 150%%;
-            color: rgba(0,0,0,0);
-            text-shadow: 
-                0.05em 0.05em 0.05em rgba(185, 150, 69, 0.3),
-                0 0 0 #5d4b23;
+            %s
+            %s
             text-align: left;
             width: 100%%;
         }
@@ -230,10 +222,8 @@ public class GiftCardService {
         .sender-name {
             font-size: 25px;
             font-weight: 400;
-            color: rgba(0,0,0,0);
-            text-shadow: 
-                0.05em 0.05em 0.05em rgba(185, 150, 69, 0.3),
-                0 0 0 #5d4b23;
+            %s
+            %s
             text-align: right;
             width: 100%%;
         }
@@ -277,9 +267,18 @@ public class GiftCardService {
     </div>
 </body>
 </html>
-            """.formatted(amount, recipient, "https://i.postimg.cc/tTVJ85gh/In-Calabria-gold.png", giftCardId, message, sender);
+                """.formatted(
+                type.getGradientColor1(), type.getGradientColor2(), type.getGradientColor3(),
+                type.getGradientColor4(), type.getGradientColor5(), type.getGradientColor6(),
+                textStyle, textShadow,
+                textStyle, textShadow,
+                textStyle, textShadow,
+                textStyle, textShadow,
+                textStyle, textShadow,
+                textStyle, textShadow,
+                type.getAmount(), recipient, type.getLogoUrl(), giftCardId, message, sender
+        );
     }
-
 
     private String generateRandomCode(int len) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
