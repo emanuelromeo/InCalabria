@@ -89,6 +89,13 @@
 			<version>42.7.2</version>
 		</dependency>
 
+		<!-- Playwright -->
+		<dependency>
+			<groupId>com.microsoft.playwright</groupId>
+			<artifactId>playwright</artifactId>
+			<version>1.48.0</version>
+		</dependency>
+
 
 	</dependencies>
 
