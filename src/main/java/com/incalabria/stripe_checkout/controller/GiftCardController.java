@@ -32,13 +32,13 @@ public class GiftCardController {
     @GetMapping(value = "/image", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateGiftCardImage(
             @RequestParam GiftCardType type,
-            @RequestParam String recipient,
+            @RequestParam String receiver,
             @RequestParam String giftCardId,
             @RequestParam String message,
             @RequestParam String sender) throws IOException {
 
         byte[] imageBytes = service.generateGiftCardImage(
-                type, recipient, giftCardId, message, sender);
+                type, receiver, giftCardId, message, sender);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,

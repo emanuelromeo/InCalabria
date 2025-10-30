@@ -42,12 +42,12 @@ public class GiftCardService {
 
     public byte[] generateGiftCardImage(
             GiftCardType type,
-            String recipient,
+            String receiver,
             String giftCardId,
             String message,
             String sender) throws IOException {
 
-        String html = buildHtml(type, recipient, giftCardId, message, sender);
+        String html = buildHtml(type, receiver, giftCardId, message, sender);
 
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch();
@@ -71,7 +71,7 @@ public class GiftCardService {
         }
     }
 
-    private String buildHtml(GiftCardType type, String recipient, String giftCardId,
+    private String buildHtml(GiftCardType type, String receiver, String giftCardId,
                              String message, String sender) {
         String textShadow = "";
         String textStyle = "color: " + type.getTextBackgroundColor() + ";";
@@ -129,7 +129,7 @@ public class GiftCardService {
             height: 100%%;
         }
 
-        .recipient-name {
+        .receiver-name {
             font-size: 25px;
             font-weight: 400;
             %s
@@ -245,7 +245,7 @@ public class GiftCardService {
         <div class="amount">%s€</div>
         
         <div class="gift-card-front">
-            <div class="recipient-name">%s</div>
+            <div class="receiver-name">%s</div>
             
             <div class="logo-container">
                 <img src="%s" alt="InCalabria Logo" class="logo-image">
@@ -276,7 +276,7 @@ public class GiftCardService {
                 textStyle, textShadow,
                 textStyle, textShadow,
                 textStyle, textShadow,
-                type.getAmount(), recipient, type.getLogoUrl(), giftCardId, message, sender
+                type.getAmount(), receiver, type.getLogoUrl(), giftCardId, message, sender
         );
     }
 
@@ -300,5 +300,3 @@ public class GiftCardService {
     }
 
 }
-
-
