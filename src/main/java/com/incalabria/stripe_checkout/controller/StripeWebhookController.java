@@ -1,6 +1,5 @@
 package com.incalabria.stripe_checkout.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.incalabria.stripe_checkout.config.StripeProperties;
 import com.incalabria.stripe_checkout.service.SendGridEmailService;
 import com.stripe.exception.SignatureVerificationException;
@@ -12,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;

@@ -17,30 +17,44 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class BookingService {
+public class CheckoutService {
 
-    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
+    private static final Logger log = LoggerFactory.getLogger(CheckoutService.class);
     private final String appDomain;
 
     @Autowired
-    public BookingService(StripeProperties stripeProperties,
-                             @Value("${app.domain}") String appDomain) {
+    public CheckoutService(StripeProperties stripeProperties,
+                           @Value("${app.domain}") String appDomain) {
         this.appDomain = appDomain;
         com.stripe.Stripe.apiKey = stripeProperties.getApi().getSecretKey();
     }
 
     public Session createCheckoutSession(BookingDto booking) throws StripeException {
         log.info("Booking info:\n{}", booking);
-        long amountInCents = (long) (booking.getAmount() * 100);
+        long baseAmountInCents = (long) (booking.getAmount() * 100);
+        long commissionAmount = (long) (baseAmountInCents * 0.04);
 
-        SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
+        // Riga esperienza principale
+        SessionCreateParams.LineItem baseItem = SessionCreateParams.LineItem.builder()
                 .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                         .setCurrency("eur")
+                        .setUnitAmount(baseAmountInCents)
                         .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                 .setName(booking.getExperience())
                                 .setDescription(booking.getBookingDescription())
                                 .build())
-                        .setUnitAmount(amountInCents)
+                        .build())
+                .setQuantity(1L)
+                .build();
+
+        // Riga commissione aggiuntiva 4%
+        SessionCreateParams.LineItem commissionItem = SessionCreateParams.LineItem.builder()
+                .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                        .setCurrency("eur")
+                        .setUnitAmount(commissionAmount)
+                        .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                .setName("Commissioni e tasse")
+                                .build())
                         .build())
                 .setQuantity(1L)
                 .build();
@@ -62,7 +76,8 @@ public class BookingService {
         metadata.put("pickup", booking.getPickup());
 
         SessionCreateParams params = SessionCreateParams.builder()
-                .addLineItem(lineItem)
+                .addLineItem(baseItem)
+                .addLineItem(commissionItem)
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setPhoneNumberCollection(SessionCreateParams.PhoneNumberCollection.builder().setEnabled(true).build())
                 .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
@@ -75,7 +90,7 @@ public class BookingService {
                 .addPaymentMethodType(SessionCreateParams.PaymentMethodType.KLARNA)
                 .build();
 
-        log.info("Building checkout session...");
+        log.info("Building checkout session with additional 4% commission...");
         return Session.create(params);
     }
 

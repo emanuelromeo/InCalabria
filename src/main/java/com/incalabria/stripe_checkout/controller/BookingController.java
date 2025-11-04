@@ -1,7 +1,7 @@
 package com.incalabria.stripe_checkout.controller;
 
 import com.incalabria.stripe_checkout.dto.BookingDto;
-import com.incalabria.stripe_checkout.service.BookingService;
+import com.incalabria.stripe_checkout.service.CheckoutService;
 import com.incalabria.stripe_checkout.service.SendGridEmailService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
@@ -22,20 +22,20 @@ public class BookingController {
     private static final Logger log = LoggerFactory.getLogger(BookingController.class);
 
     private final SendGridEmailService sendGridEmailService;
-    private final BookingService bookingService;
+    private final CheckoutService checkoutService;
 
     @Autowired
     public BookingController(SendGridEmailService sendGridEmailService,
-                             BookingService bookingService) {
+                             CheckoutService checkoutService) {
         this.sendGridEmailService = sendGridEmailService;
-        this.bookingService = bookingService;
+        this.checkoutService = checkoutService;
     }
 
     @PostMapping("/create-checkout-session")
     public ResponseEntity<Map<String, String>> createCheckoutSession(@RequestBody BookingDto booking) {
         Session session;
         try {
-            session = bookingService.createCheckoutSession(booking);
+            session = checkoutService.createCheckoutSession(booking);
         } catch (StripeException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
@@ -50,7 +50,7 @@ public class BookingController {
         Session session;
 
         try {
-            session = bookingService.retrieveSession(sessionId);
+            session = checkoutService.retrieveSession(sessionId);
             log.info("Session with ID " + sessionId + " successfully retrieved");
         } catch (StripeException e) {
             log.error(e.getMessage());
@@ -58,7 +58,7 @@ public class BookingController {
         }
 
         try {
-            paymentIntent = bookingService.capturePaymentIntent(sessionId);
+            paymentIntent = checkoutService.capturePaymentIntent(sessionId);
             log.info("Payment Intent: " + paymentIntent);
         } catch (StripeException e) {
             log.error(e.getMessage());
@@ -99,7 +99,7 @@ public class BookingController {
         Session session;
 
         try {
-            session = bookingService.retrieveSession(sessionId);
+            session = checkoutService.retrieveSession(sessionId);
             log.info("Session with ID " + sessionId + " successfully retrieved");
         } catch (StripeException e) {
             log.error(e.getMessage());
@@ -107,7 +107,7 @@ public class BookingController {
         }
 
         try {
-            paymentIntent = bookingService.cancelPaymentIntent(sessionId);
+            paymentIntent = checkoutService.cancelPaymentIntent(sessionId);
             log.info("Payment Intent: " + paymentIntent);
         } catch (StripeException e) {
             log.error(e.getMessage());
