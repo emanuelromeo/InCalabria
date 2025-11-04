@@ -1,7 +1,7 @@
 package com.incalabria.stripe_checkout.entity;
 
+import com.incalabria.stripe_checkout.enumeration.GiftCardType;
 import jakarta.persistence.*;
-import java.time.LocalDate;
 
 @Entity
 public class GiftCard {
@@ -11,9 +11,20 @@ public class GiftCard {
     private Long id;
     @Column(unique = true)
     private String code;
-    private Boolean used = false;
-    private Integer value;
-    private LocalDate expiryDate;
+    @Enumerated(EnumType.STRING)
+    private GiftCardType type;
+    private String sender;
+    private String receiver;
+    private String message;
+    private Double amount;
+
+    public GiftCard(GiftCardType type, String sender, String receiver, String message) {
+        this.type = type;
+        this.sender = sender;
+        this.receiver = receiver;
+        this.message = message;
+        this.amount = (double) type.getAmount();
+    }
 
     // getter e setter
 
@@ -33,28 +44,45 @@ public class GiftCard {
         this.code = code;
     }
 
-    public Boolean getUsed() {
-        return used;
+    public GiftCardType getType() {
+        return type;
     }
 
-    public void setUsed(Boolean used) {
-        this.used = used;
+    public void setType(GiftCardType type) {
+        this.type = type;
     }
 
-    public Integer getValue() {
-        return value;
+    public String getSender() {
+        return sender;
     }
 
-    public void setValue(Integer value) {
-        this.value = value;
+    public void setSender(String sender) {
+        this.sender = sender;
     }
 
-    public LocalDate getExpiryDate() {
-        return expiryDate;
+    public String getReceiver() {
+        return receiver;
     }
 
-    public void setExpiryDate(LocalDate expiryDate) {
-        this.expiryDate = expiryDate;
+    public void setReceiver(String receiver) {
+        this.receiver = receiver;
     }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public Double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(Double amount) {
+        this.amount = amount;
+    }
+
 }
 

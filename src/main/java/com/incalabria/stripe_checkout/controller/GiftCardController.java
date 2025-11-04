@@ -1,5 +1,6 @@
 package com.incalabria.stripe_checkout.controller;
 
+import com.incalabria.stripe_checkout.dto.GiftCardDto;
 import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.incalabria.stripe_checkout.enumeration.GiftCardType;
 import com.incalabria.stripe_checkout.service.GiftCardService;
@@ -18,15 +19,8 @@ public class GiftCardController {
     private GiftCardService service;
 
     @PostMapping("/create")
-    public GiftCard createGiftCard(@RequestBody GiftCard v) {
-        return service.createGiftCard(v.getValue(), v.getExpiryDate());
-    }
-
-    @PostMapping("/redeem")
-    public ResponseEntity<GiftCard> redeemGiftCard(@RequestParam String code) {
-        return service.redeemGiftCard(code)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public GiftCard createGiftCard(@RequestBody GiftCardDto giftCardDto) {
+        return service.createGiftCard(giftCardDto.toGiftCard());
     }
 
     @GetMapping(value = "/image", produces = MediaType.IMAGE_PNG_VALUE)

@@ -22,18 +22,14 @@ public class GiftCardService {
     @Autowired
     private GiftCardRepository repository;
 
-    public GiftCard createGiftCard(int value, LocalDate expiryDate) {
+    public GiftCard createGiftCard(GiftCard giftCard) {
         String code;
         int maxAttempts = 10;
         for (int i = 0; i < maxAttempts; i++) {
             code = generateRandomCode(10);
             if (!repository.existsByCode(code)) {
-                GiftCard v = new GiftCard();
-                v.setCode(code);
-                v.setValue(value);
-                v.setExpiryDate(expiryDate);
-                v.setUsed(false);
-                return repository.save(v);
+                giftCard.setCode(code);
+                return repository.save(giftCard);
             }
         }
         // Se non ha trovato un codice unico dopo maxAttempts, lancia eccezione
@@ -289,14 +285,16 @@ public class GiftCardService {
         return sb.toString();
     }
 
-    public Optional<GiftCard> redeemGiftCard(String code) {
+    public Double withdrawFromGiftCard(String code, double amount) {
         Optional<GiftCard> giftCard = repository.findByCode(code);
-        if (giftCard.isPresent() && !giftCard.get().getUsed()) {
-            giftCard.get().setUsed(true);
+        if (giftCard.isPresent()) {
+            double initialAmount = giftCard.get().getAmount();
+            double leftAmount = Math.max(0, initialAmount - amount);
+            giftCard.get().setAmount(leftAmount);
             repository.save(giftCard.get());
-            return giftCard;
+            return initialAmount - leftAmount;
         }
-        return Optional.empty();
+        return 0.0;
     }
 
 }
