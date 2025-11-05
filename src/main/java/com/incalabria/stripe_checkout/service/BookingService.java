@@ -1,7 +1,9 @@
 package com.incalabria.stripe_checkout.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.incalabria.stripe_checkout.config.StripeProperties;
-import com.incalabria.stripe_checkout.dto.BookingDto;
+import com.incalabria.stripe_checkout.dto.BookingWebhookData;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
@@ -17,21 +19,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class CheckoutService {
+public class BookingService {
 
-    private static final Logger log = LoggerFactory.getLogger(CheckoutService.class);
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private final String appDomain;
 
     @Autowired
-    public CheckoutService(StripeProperties stripeProperties,
-                           @Value("${app.domain}") String appDomain) {
+    public BookingService(StripeProperties stripeProperties,
+                          @Value("${app.domain}") String appDomain) {
         this.appDomain = appDomain;
         com.stripe.Stripe.apiKey = stripeProperties.getApi().getSecretKey();
     }
 
-    public Session createCheckoutSession(BookingDto booking) throws StripeException {
+    public Session createCheckoutSession(BookingWebhookData booking) throws StripeException {
         log.info("Booking info:\n{}", booking);
-        long baseAmountInCents = (long) (booking.getAmount() * 100);
+        long baseAmountInCents = (long) (booking.getTotal() * 100);
         long commissionAmount = (long) (baseAmountInCents * 0.04);
 
         // Riga esperienza principale
@@ -67,13 +69,24 @@ public class CheckoutService {
         String cancelUrl = appDomain + "/";
 
         Map<String, String> metadata = new HashMap<>();
+        metadata.put("productType", "booking");
         metadata.put("experience", booking.getExperience());
-        metadata.put("participants", String.valueOf(booking.getParticipantsNumber()));
-        metadata.put("date", booking.getDatePc() != null ? booking.getDatePc() : booking.getDateMobile());
+        metadata.put("participants", String.valueOf(booking.getParticipants()));
+        metadata.put("date", booking.getDate());
         metadata.put("time", booking.getTime());
         metadata.put("needs", booking.getNeeds());
-        metadata.put("optionals", booking.getOptionals().toString());
         metadata.put("pickup", booking.getPickup());
+
+        if (booking.hasOtherRequests()) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            String othersJson = null;
+            try {
+                othersJson = objectMapper.writeValueAsString(booking.getOthers());
+            } catch (JsonProcessingException e) {
+                log.error("Can't parse other requests: " + e.getMessage());
+            }
+            metadata.put("others", othersJson);
+        }
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .addLineItem(baseItem)

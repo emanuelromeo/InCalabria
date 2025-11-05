@@ -1,7 +1,7 @@
 package com.incalabria.stripe_checkout.controller;
 
-import com.incalabria.stripe_checkout.dto.BookingDto;
-import com.incalabria.stripe_checkout.service.CheckoutService;
+import com.incalabria.stripe_checkout.dto.BookingWebhookData;
+import com.incalabria.stripe_checkout.service.BookingService;
 import com.incalabria.stripe_checkout.service.SendGridEmailService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
@@ -16,26 +16,26 @@ import java.io.IOException;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/booking")
 public class BookingController {
 
     private static final Logger log = LoggerFactory.getLogger(BookingController.class);
 
     private final SendGridEmailService sendGridEmailService;
-    private final CheckoutService checkoutService;
+    private final BookingService bookingService;
 
     @Autowired
     public BookingController(SendGridEmailService sendGridEmailService,
-                             CheckoutService checkoutService) {
+                             BookingService bookingService) {
         this.sendGridEmailService = sendGridEmailService;
-        this.checkoutService = checkoutService;
+        this.bookingService = bookingService;
     }
 
     @PostMapping("/create-checkout-session")
-    public ResponseEntity<Map<String, String>> createCheckoutSession(@RequestBody BookingDto booking) {
+    public ResponseEntity<Map<String, String>> createCheckoutSession(@RequestBody BookingWebhookData booking) {
         Session session;
         try {
-            session = checkoutService.createCheckoutSession(booking);
+            session = bookingService.createCheckoutSession(booking);
         } catch (StripeException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
@@ -50,7 +50,7 @@ public class BookingController {
         Session session;
 
         try {
-            session = checkoutService.retrieveSession(sessionId);
+            session = bookingService.retrieveSession(sessionId);
             log.info("Session with ID " + sessionId + " successfully retrieved");
         } catch (StripeException e) {
             log.error(e.getMessage());
@@ -58,7 +58,7 @@ public class BookingController {
         }
 
         try {
-            paymentIntent = checkoutService.capturePaymentIntent(sessionId);
+            paymentIntent = bookingService.capturePaymentIntent(sessionId);
             log.info("Payment Intent: " + paymentIntent);
         } catch (StripeException e) {
             log.error(e.getMessage());
@@ -75,7 +75,7 @@ public class BookingController {
                         Ciao %s,
                         
                         siamo felici di confermare la tua prenotazione con InCalabria!
-                        il pagamento di %.2f€ è andato a buon fine e la tua esperienza \"%s\" è ufficialmente prenotata.
+                        Il pagamento di %.2f€ è andato a buon fine e la tua esperienza \"%s\" è ufficialmente prenotata.
                         
                         Nel frattempo, se hai domande o desideri personalizzare la tua esperienza, puoi contattarci rispondendo a questa mail o scrivendoci su whatsapp al numero +39 3333286692.
                         Preparati a vivere la Calabria più autentica, tra mare, natura e tradizioni locali.
@@ -83,7 +83,7 @@ public class BookingController {
                         A presto,
                         Il team di InCalabria
                         """, customerName, amount, experience);
-                sendGridEmailService.sendEmail(customerEmail, "La tua esperienza InCalabria è confermata!", emailText);
+                sendGridEmailService.sendEmail(customerEmail, "Prenotazione confermata!", emailText);
                 log.info("Confirmation email sent to the customer");
             } catch (IOException e) {
                 log.error(e.getMessage());
@@ -99,7 +99,7 @@ public class BookingController {
         Session session;
 
         try {
-            session = checkoutService.retrieveSession(sessionId);
+            session = bookingService.retrieveSession(sessionId);
             log.info("Session with ID " + sessionId + " successfully retrieved");
         } catch (StripeException e) {
             log.error(e.getMessage());
@@ -107,7 +107,7 @@ public class BookingController {
         }
 
         try {
-            paymentIntent = checkoutService.cancelPaymentIntent(sessionId);
+            paymentIntent = bookingService.cancelPaymentIntent(sessionId);
             log.info("Payment Intent: " + paymentIntent);
         } catch (StripeException e) {
             log.error(e.getMessage());
@@ -132,7 +132,7 @@ public class BookingController {
                         Grazie ancora per la fiducia,
                         Il team di InCalabria
                         """, customerName, experience);
-                sendGridEmailService.sendEmail(customerEmail, "Aggiornamento sulla tua richiesta di escursione in Calabria", emailText);
+                sendGridEmailService.sendEmail(customerEmail, "Richiesta rifiutata", emailText);
                 log.info("Confirmation email sent to the customer");
             } catch (IOException e) {
                 log.error(e.getMessage());
