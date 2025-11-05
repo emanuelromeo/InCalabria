@@ -1,6 +1,6 @@
 package com.incalabria.stripe_checkout.controller;
 
-import com.incalabria.stripe_checkout.dto.BookingWebhookData;
+import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
 import com.incalabria.stripe_checkout.service.BookingService;
 import com.incalabria.stripe_checkout.service.SendGridEmailService;
 import com.stripe.exception.StripeException;
@@ -59,7 +59,7 @@ public class BookingController {
 
         try {
             paymentIntent = bookingService.capturePaymentIntent(sessionId);
-            log.info("Payment Intent: " + paymentIntent);
+            log.info("PaymentIntent: " + paymentIntent);
         } catch (StripeException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());
@@ -108,7 +108,7 @@ public class BookingController {
 
         try {
             paymentIntent = bookingService.cancelPaymentIntent(sessionId);
-            log.info("Payment Intent: " + paymentIntent);
+            log.info("PaymentIntent: " + paymentIntent);
         } catch (StripeException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());

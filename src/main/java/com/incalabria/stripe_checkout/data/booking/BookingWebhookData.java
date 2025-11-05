@@ -1,27 +1,23 @@
-package com.incalabria.stripe_checkout.dto;
+package com.incalabria.stripe_checkout.data.booking;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class BookingWebhookData {
     private String sessionId;
-    private String customerName;
-    private String customerEmail;
-    private String customerPhone;
+    private Customer customer;
     private String experience;
     private String participants;
     private String date;
     private String time;
     private String pickup;
-    private List<OtherRequest> others;
+    private List<Others> others;
     private String needs;
     private double total;
 
-    public BookingWebhookData(String sessionId, String customerName, String customerEmail, String customerPhone, String experience, String participants, String date, String time, String pickup, List<OtherRequest> others, String needs, double total) {
+    public BookingWebhookData(String sessionId, Customer customer, String experience, String participants, String date, String time, String pickup, List<Others> others, String needs, double total) {
         this.sessionId = sessionId;
-        this.customerName = customerName;
-        this.customerEmail = customerEmail;
-        this.customerPhone = customerPhone;
+        this.customer = customer;
         this.experience = experience;
         this.participants = participants;
         this.date = date;
@@ -32,6 +28,7 @@ public class BookingWebhookData {
         this.total = total;
     }
 
+
     public boolean hasOtherRequests() {
         return others != null && !others.isEmpty();
     }
@@ -40,36 +37,23 @@ public class BookingWebhookData {
         return needs != null && !needs.isEmpty();
     }
 
+
+    //getter and setter
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
     public String getSessionId() {
         return sessionId;
     }
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
-    }
-
-    public String getCustomerName() {
-        return customerName;
-    }
-
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
-
-    public String getCustomerEmail() {
-        return customerEmail;
-    }
-
-    public void setCustomerEmail(String customerEmail) {
-        this.customerEmail = customerEmail;
-    }
-
-    public String getCustomerPhone() {
-        return customerPhone;
-    }
-
-    public void setCustomerPhone(String customerPhone) {
-        this.customerPhone = customerPhone;
     }
 
     public String getExperience() {
@@ -112,11 +96,11 @@ public class BookingWebhookData {
         this.pickup = pickup;
     }
 
-    public List<OtherRequest> getOthers() {
+    public List<Others> getOthers() {
         return others;
     }
 
-    public void setOthers(List<OtherRequest> others) {
+    public void setOthers(List<Others> others) {
         this.others = others;
     }
 
@@ -147,7 +131,7 @@ public class BookingWebhookData {
         if (hasOtherRequests()) {
             stringBuilder.append(" | Altre richieste: ")
                     .append(others.stream()
-                            .map(OtherRequest::getName)
+                            .map(Others::getName)
                             .collect(Collectors.joining(", ")));
 
         }

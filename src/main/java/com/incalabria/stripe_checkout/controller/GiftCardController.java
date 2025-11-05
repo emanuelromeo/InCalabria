@@ -1,6 +1,6 @@
 package com.incalabria.stripe_checkout.controller;
 
-import com.incalabria.stripe_checkout.dto.GiftCardWebhookData;
+import com.incalabria.stripe_checkout.data.giftcard.GiftCardWebhookData;
 import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.incalabria.stripe_checkout.enumeration.GiftCardType;
 import com.incalabria.stripe_checkout.service.GiftCardService;

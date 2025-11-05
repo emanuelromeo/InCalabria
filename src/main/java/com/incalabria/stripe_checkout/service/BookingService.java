@@ -3,7 +3,7 @@ package com.incalabria.stripe_checkout.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.incalabria.stripe_checkout.config.StripeProperties;
-import com.incalabria.stripe_checkout.dto.BookingWebhookData;
+import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
@@ -92,6 +92,18 @@ public class BookingService {
                 .addLineItem(baseItem)
                 .addLineItem(commissionItem)
                 .setMode(SessionCreateParams.Mode.PAYMENT)
+                .addCustomField(
+                        SessionCreateParams.CustomField.builder()
+                                .setKey("taxId")
+                                .setLabel(
+                                        SessionCreateParams.CustomField.Label.builder()
+                                                .setType(SessionCreateParams.CustomField.Label.Type.CUSTOM)
+                                                .setCustom("P.IVA/Codice Fiscale")
+                                                .build()
+                                )
+                                .setType(SessionCreateParams.CustomField.Type.TEXT)
+                                .build()
+                )
                 .setPhoneNumberCollection(SessionCreateParams.PhoneNumberCollection.builder().setEnabled(true).build())
                 .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
                 .setPaymentIntentData(paymentIntentData)

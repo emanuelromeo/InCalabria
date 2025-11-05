@@ -1,4 +1,4 @@
-package com.incalabria.stripe_checkout.dto;
+package com.incalabria.stripe_checkout.data.giftcard;
 
 import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.incalabria.stripe_checkout.enumeration.GiftCardType;

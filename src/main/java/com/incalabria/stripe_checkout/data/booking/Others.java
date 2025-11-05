@@ -1,12 +1,12 @@
-package com.incalabria.stripe_checkout.dto;
+package com.incalabria.stripe_checkout.data.booking;
 
-public class OtherRequest {
+public class Others {
     private String name;
     private double cost;
 
-    public OtherRequest() {}  // Costruttore vuoto per deserializzazione
+    public Others() {}  // Costruttore vuoto per deserializzazione
 
-    public OtherRequest(String name, double cost) {
+    public Others(String name, double cost) {
         this.name = name;
         this.cost = cost;
     }

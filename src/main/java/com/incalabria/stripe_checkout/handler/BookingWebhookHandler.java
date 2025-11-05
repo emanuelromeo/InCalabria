@@ -1,7 +1,7 @@
 package com.incalabria.stripe_checkout.handler;
 
-import com.incalabria.stripe_checkout.dto.BookingWebhookData;
-import com.incalabria.stripe_checkout.dto.OtherRequest;
+import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
+import com.incalabria.stripe_checkout.data.booking.Others;
 import com.incalabria.stripe_checkout.extractor.BookingWebhookDataExtractor;
 import com.incalabria.stripe_checkout.service.SendGridEmailService;
 import com.stripe.model.checkout.Session;
@@ -13,8 +13,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
-
-import static java.util.Arrays.stream;
 
 @Component
 public class BookingWebhookHandler {
@@ -52,12 +50,12 @@ public class BookingWebhookHandler {
         String customerEmailText = buildCustomerEmailText(data);
 
         try {
-            sendGridEmailService.sendEmail(data.getCustomerEmail(),
+            sendGridEmailService.sendEmail(data.getCustomer().getEmail(),
                     "Richiesta presa in carico",
                     customerEmailText);
-            log.info("Customer confirmation email sent to: {}", data.getCustomerEmail());
+            log.info("Customer confirmation email sent to: {}", data.getCustomer().getEmail());
         } catch (IOException e) {
-            log.error("Failed to send customer confirmation email to: {}", data.getCustomerEmail(), e);
+            log.error("Failed to send customer confirmation email to: {}", data.getCustomer().getEmail(), e);
             sendGridEmailService.sendEmail(adminEmail, "Errore di invio email al cliente",
                     String.format("Session ID: %s\nErrore: %s", data.getSessionId(), e.getMessage()));
             throw e;
@@ -67,9 +65,7 @@ public class BookingWebhookHandler {
     private String buildAdminEmailText(BookingWebhookData data) {
         StringBuilder text = new StringBuilder();
         text.append("Session ID: ").append(data.getSessionId()).append("\n");
-        text.append("Customer name: ").append(data.getCustomerName()).append("\n");
-        text.append("Customer email: ").append(data.getCustomerEmail()).append("\n");
-        text.append("Customer phone: ").append(data.getCustomerPhone()).append("\n");
+        text.append("Customer: ").append(data.getCustomer()).append("\n");
         text.append("Experience: ").append(data.getExperience()).append("\n");
         text.append("Participants: ").append(data.getParticipants()).append("\n");
         text.append("Date: ").append(data.getDate()).append("\n");
@@ -78,7 +74,7 @@ public class BookingWebhookHandler {
 
         if (data.hasOtherRequests()) {
             text.append("Others:\n");
-            for (OtherRequest req : data.getOthers()) {
+            for (Others req : data.getOthers()) {
                 text.append("• ").append(req.getName())
                         .append(" (").append(String.format("%.2f€", req.getCost())).append(")\n");
             }
@@ -98,7 +94,7 @@ public class BookingWebhookHandler {
         String timeDisplay = convertTimeToItalian(data.getTime());
         String optionalsText = data.hasOtherRequests() ?
                 String.format("• Altre richieste: %s\n", data.getOthers().stream()
-                        .map(OtherRequest::getName)
+                        .map(Others::getName)
                         .collect(Collectors.joining(", "))) :
                 "";
         String needsText = data.hasNeeds() ?
@@ -128,7 +124,7 @@ public class BookingWebhookHandler {
                 A presto,
                 Il team di InCalabria
                 """,
-                data.getCustomerName(),
+                data.getCustomer().getName(),
                 data.getExperience(),
                 data.getDate(),
                 timeDisplay,

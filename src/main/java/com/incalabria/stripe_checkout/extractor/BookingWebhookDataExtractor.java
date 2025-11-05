@@ -2,8 +2,9 @@ package com.incalabria.stripe_checkout.extractor;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.incalabria.stripe_checkout.dto.BookingWebhookData;
-import com.incalabria.stripe_checkout.dto.OtherRequest;
+import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
+import com.incalabria.stripe_checkout.data.booking.Customer;
+import com.incalabria.stripe_checkout.data.booking.Others;
 import com.stripe.model.checkout.Session;
 import org.springframework.stereotype.Component;
 
@@ -19,13 +20,13 @@ public class BookingWebhookDataExtractor {
     public BookingWebhookData extractBookingData(Session session) {
         Map<String, String> metadata = session.getMetadata();
 
-        List<OtherRequest> otherRequests = Collections.emptyList();
+        List<Others> others = Collections.emptyList();
         String othersJson = metadata.get("others");
         if (othersJson != null && !othersJson.isEmpty()) {
             try {
-                otherRequests = objectMapper.readValue(
+                others = objectMapper.readValue(
                         othersJson,
-                        new TypeReference<List<OtherRequest>>() {}
+                        new TypeReference<List<Others>>() {}
                 );
             } catch (Exception e) {
                 // Log e procedi con lista vuota
@@ -35,15 +36,24 @@ public class BookingWebhookDataExtractor {
 
         return new BookingWebhookData(
                 session.getId(),
-                session.getCustomerDetails().getName(),
-                session.getCustomerDetails().getEmail(),
-                session.getCustomerDetails().getPhone(),
+                new Customer(
+                        session.getCustomerDetails().getName(),
+                        session.getCustomerDetails().getEmail(),
+                        session.getCustomerDetails().getPhone(),
+                        session.getCustomFields().stream()
+                                .filter(field -> "taxId".equals(field.getKey()))
+                                .map(field -> field.getText() != null ? field.getText().getValue() : null)
+                                .filter(java.util.Objects::nonNull)
+                                .findFirst()
+                                .orElse(null),
+                        session.getCustomerDetails().getAddress()
+                ),
                 metadata.get("experience"),
                 metadata.get("participants"),
                 metadata.get("date"),
                 metadata.get("time"),
                 metadata.get("pickup"),
-                otherRequests,
+                others,
                 metadata.get("needs"),
                 session.getAmountTotal() / 100.0
         );
