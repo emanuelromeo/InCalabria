@@ -65,7 +65,7 @@ public class BookingService {
                 .setCaptureMethod(SessionCreateParams.PaymentIntentData.CaptureMethod.MANUAL)
                 .build();
 
-        String successUrl = appDomain + "/success";
+        String successUrl = appDomain + "/experiences/success";
         String cancelUrl = appDomain + "/";
 
         Map<String, String> metadata = new HashMap<>();
@@ -83,7 +83,7 @@ public class BookingService {
             try {
                 othersJson = objectMapper.writeValueAsString(booking.getOthers());
             } catch (JsonProcessingException e) {
-                log.error("Can't parse other requests: " + e.getMessage());
+                log.error("Can't parse others: " + e.getMessage());
             }
             metadata.put("others", othersJson);
         }
@@ -98,7 +98,7 @@ public class BookingService {
                                 .setLabel(
                                         SessionCreateParams.CustomField.Label.builder()
                                                 .setType(SessionCreateParams.CustomField.Label.Type.CUSTOM)
-                                                .setCustom("P.IVA/Codice Fiscale")
+                                                .setCustom("Codice Fiscale (o P.IVA)")
                                                 .build()
                                 )
                                 .setType(SessionCreateParams.CustomField.Type.TEXT)
