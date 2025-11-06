@@ -126,7 +126,7 @@ public class BookingController {
                         Purtroppo, in questo momento non siamo in grado di confermare la tua richiesta per l’esperienza \"%s\", a causa della mancanza di disponibilità.
                         Siamo davvero spiacenti per l’inconveniente, ma ci auguriamo di poterti accogliere presto in un’altra delle nostre attività.
                         
-                        Ti invitiamo a consultare il nostro sito [www.incalabria.net](https://www.incalabria.net) per scoprire altre esperienze disponibili nelle stesse date o in periodi alternativi.
+                        Ti invitiamo a consultare il nostro sito www.incalabria.net per scoprire altre esperienze disponibili nelle stesse date o in periodi alternativi.
                         Per qualsiasi dubbio o richiesta, puoi scriverci su Whatsapp al numero +39 3333286692, saremo felici di aiutarti a trovare un’alternativa.
                         
                         Grazie ancora per la fiducia,
