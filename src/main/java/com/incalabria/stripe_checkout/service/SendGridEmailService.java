@@ -1,6 +1,7 @@
 package com.incalabria.stripe_checkout.service;
 import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Attachments;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,25 @@ public class SendGridEmailService {
         Email toEmail = new Email(to);
         Content content = new Content("text/plain", body);
         Mail mail = new Mail(fromEmail, subject, toEmail, content);
+
+        Request request = new Request();
+        request.setMethod(Method.POST);
+        request.setEndpoint("mail/send");
+        request.setBody(mail.build());
+
+        Response response = sendGrid.api(request);
+
+        if (response.getStatusCode() >= 400) {
+            throw new IOException("Errore invio email: " + response.getBody());
+        }
+    }
+
+    public void sendEmail(String to, String subject, String body, Attachments attachments) throws IOException {
+
+        Email toEmail = new Email(to);
+        Content content = new Content("text/plain", body);
+        Mail mail = new Mail(fromEmail, subject, toEmail, content);
+        mail.addAttachments(attachments);
 
         Request request = new Request();
         request.setMethod(Method.POST);

@@ -26,7 +26,7 @@ public class StripeWebhookService {
      */
     public void handleCheckoutSessionCompleted(Session session) {
         Map<String, String> metadata = session.getMetadata();
-        String productType = metadata.getOrDefault("productType", "");
+        String productType = metadata.getOrDefault("productType", "???");
 
         log.info("Processing webhook for productType: {}", productType);
 

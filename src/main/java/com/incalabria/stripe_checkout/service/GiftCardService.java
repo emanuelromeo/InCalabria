@@ -76,9 +76,11 @@ public class GiftCardService {
         String cancelUrl = appDomain + "/";
 
         Map<String, String> metadata = new HashMap<>();
+        metadata.put("type", giftCard.getType().toString());
         metadata.put("receiver", giftCard.getReceiver());
         metadata.put("sender", giftCard.getSender());
         metadata.put("message", giftCard.getMessage());
+        metadata.put("productType", "giftcard");
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .addLineItem(item)
@@ -97,14 +99,9 @@ public class GiftCardService {
     }
 
 
-    public byte[] generateGiftCardImage(
-            GiftCardType type,
-            String receiver,
-            String giftCardId,
-            String message,
-            String sender) throws IOException {
+    public byte[] generateGiftCardImage(GiftCard giftCard) throws IOException {
 
-        String html = buildHtml(type, receiver, giftCardId, message, sender);
+        String html = buildHtml(giftCard.getType(), giftCard.getCode(), giftCard.getReceiver(), giftCard.getMessage(), giftCard.getSender());
 
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch();
@@ -128,7 +125,7 @@ public class GiftCardService {
         }
     }
 
-    private String buildHtml(GiftCardType type, String receiver, String giftCardId,
+    private String buildHtml(GiftCardType type, String giftCardCode, String receiver,
                              String message, String sender) {
         String textShadow = "";
         String textStyle = "color: " + type.getTextBackgroundColor() + ";";
@@ -308,7 +305,7 @@ public class GiftCardService {
                 <img src="%s" alt="InCalabria Logo" class="logo-image">
             </div>
             
-            <div class="id-text"><span class="id-label">id:</span> <span class="id-value">%s</span></div>
+            <div class="id-text"><span class="id-label">Code:</span> <span class="id-value">%s</span></div>
         </div>
         
         <div class="website">www.incalabria.net</div>
@@ -333,7 +330,7 @@ public class GiftCardService {
                 textStyle, textShadow,
                 textStyle, textShadow,
                 textStyle, textShadow,
-                type.getAmount(), receiver, type.getLogoUrl(), giftCardId, message, sender
+                type.getAmount(), receiver, type.getLogoUrl(), giftCardCode, message, sender
         );
     }
 
