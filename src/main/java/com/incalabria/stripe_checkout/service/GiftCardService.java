@@ -1,5 +1,7 @@
 package com.incalabria.stripe_checkout.service;
 
+import com.incalabria.stripe_checkout.config.StripeProperties;
+import com.incalabria.stripe_checkout.data.giftcard.GiftCardWebhookData;
 import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.incalabria.stripe_checkout.enumeration.GiftCardType;
 import com.incalabria.stripe_checkout.repository.GiftCardRepository;
@@ -9,20 +11,37 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.ScreenshotType;
+import com.stripe.exception.StripeException;
+import com.stripe.model.checkout.Session;
+import com.stripe.param.checkout.SessionCreateParams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class GiftCardService {
-    @Autowired
-    private GiftCardRepository repository;
 
-    public GiftCard createGiftCard(GiftCard giftCard) {
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
+    private final String appDomain;
+    private final GiftCardRepository repository;
+
+    @Autowired
+    public GiftCardService(StripeProperties stripeProperties,
+                          @Value("${app.domain}") String appDomain, GiftCardRepository repository) {
+        this.appDomain = appDomain;
+        com.stripe.Stripe.apiKey = stripeProperties.getApi().getSecretKey();
+        this.repository = repository;
+    }
+
+    public GiftCard saveGiftCard(GiftCard giftCard) {
         String code;
         int maxAttempts = 10;
         for (int i = 0; i < maxAttempts; i++) {
@@ -35,6 +54,48 @@ public class GiftCardService {
         // Se non ha trovato un codice unico dopo maxAttempts, lancia eccezione
         throw new IllegalStateException("Impossibile generare un codice giftcard unico");
     }
+
+    public Session createCheckoutSession(GiftCardWebhookData giftCard) throws StripeException {
+
+        long amountInCents = giftCard.getType().getAmount() * 100L;
+
+        // Line item for gift card purchase
+        SessionCreateParams.LineItem item = SessionCreateParams.LineItem.builder()
+                .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                        .setCurrency("eur")
+                        .setUnitAmount(amountInCents)
+                        .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                .setName("Gift Card")
+                                .setDescription("Gift card per " + giftCard.getReceiver())
+                                .build())
+                        .build())
+                .setQuantity(1L)
+                .build();
+
+        String successUrl = appDomain + "/giftcard/success";
+        String cancelUrl = appDomain + "/";
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("receiver", giftCard.getReceiver());
+        metadata.put("sender", giftCard.getSender());
+        metadata.put("message", giftCard.getMessage());
+
+        SessionCreateParams params = SessionCreateParams.builder()
+                .addLineItem(item)
+                .setMode(SessionCreateParams.Mode.PAYMENT)
+                .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
+                .setPhoneNumberCollection(SessionCreateParams.PhoneNumberCollection.builder().setEnabled(true).build())
+                .putAllMetadata(metadata)
+                .setSuccessUrl(successUrl)
+                .setCancelUrl(cancelUrl)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.PAYPAL)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.KLARNA)
+                .build();
+
+        return com.stripe.model.checkout.Session.create(params);
+    }
+
 
     public byte[] generateGiftCardImage(
             GiftCardType type,
