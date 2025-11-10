@@ -1,5 +1,6 @@
 package com.incalabria.stripe_checkout.handler;
 
+import com.incalabria.stripe_checkout.data.Customer;
 import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.incalabria.stripe_checkout.extractor.GiftCardWebhookDataExtractor;
 import com.incalabria.stripe_checkout.service.GiftCardService;
@@ -39,6 +40,7 @@ public class GiftCardWebhookHandler {
         log.info("Handling gift card purchase for session: {}", session.getId());
 
         GiftCard giftCard = service.saveGiftCard(dataExtractor.extractGiftCardData(session).toGiftCard());
+        Customer customer = new Customer(session);
         byte[] image = service.generateGiftCardImage(giftCard);
 
         String adminEmailText = String.format("""
@@ -47,12 +49,30 @@ public class GiftCardWebhookHandler {
             Sender: %s
             Receiver: %s
             Message: %s
+            Customer: %s
             """,
                 giftCard.getCode(),
                 giftCard.getType(),
                 giftCard.getSender(),
                 giftCard.getReceiver(),
-                giftCard.getMessage()
+                giftCard.getMessage(),
+                customer
+        );
+
+        String customerEmailText = String.format("""
+            Code: %s
+            Type: %s
+            Sender: %s
+            Receiver: %s
+            Message: %s
+            Customer: %s
+            """,
+                giftCard.getCode(),
+                giftCard.getType(),
+                giftCard.getSender(),
+                giftCard.getReceiver(),
+                giftCard.getMessage(),
+                customer
         );
 
         // Codifica l'immagine in Base64
@@ -68,5 +88,8 @@ public class GiftCardWebhookHandler {
 
         sendGridEmailService.sendEmail(adminEmail, "GiftCard acquistata", adminEmailText, attachments);
         log.info("Admin gift card notification email sent");
+
+        sendGridEmailService.sendEmail(customer.getEmail(), "GiftCard acquistata", customerEmailText, attachments);
+        log.info("Customer gift card notification email sent");
     }
 }

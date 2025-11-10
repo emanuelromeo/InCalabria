@@ -1,5 +1,6 @@
 package com.incalabria.stripe_checkout.extractor;
 
+import com.incalabria.stripe_checkout.data.Customer;
 import com.incalabria.stripe_checkout.data.giftcard.GiftCardWebhookData;
 import com.incalabria.stripe_checkout.enumeration.GiftCardType;
 import com.stripe.model.checkout.Session;

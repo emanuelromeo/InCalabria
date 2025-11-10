@@ -1,6 +1,7 @@
-package com.incalabria.stripe_checkout.data.booking;
+package com.incalabria.stripe_checkout.data;
 
 import com.stripe.model.Address;
+import com.stripe.model.checkout.Session;
 
 public class Customer {
     private String name;
@@ -15,6 +16,19 @@ public class Customer {
         this.phone = phone;
         this.taxId = taxId;
         this.address = address;
+    }
+
+    public Customer(Session session) {
+        name = session.getCustomerDetails().getName();
+        email = session.getCustomerDetails().getEmail();
+        phone = session.getCustomerDetails().getPhone();
+        taxId = session.getCustomFields().stream()
+                        .filter(field -> "taxId".equals(field.getKey()))
+                        .map(field -> field.getText() != null ? field.getText().getValue() : null)
+                        .filter(java.util.Objects::nonNull)
+                        .findFirst()
+                        .orElse(null);
+        address = session.getCustomerDetails().getAddress();
     }
 
     public String getName() {

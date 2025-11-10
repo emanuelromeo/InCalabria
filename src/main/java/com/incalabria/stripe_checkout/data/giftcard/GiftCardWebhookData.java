@@ -1,9 +1,11 @@
 package com.incalabria.stripe_checkout.data.giftcard;
 
+import com.incalabria.stripe_checkout.data.Customer;
 import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.incalabria.stripe_checkout.enumeration.GiftCardType;
 
 public class GiftCardWebhookData {
+
     private GiftCardType type;
     private String sender;
     private String receiver;
