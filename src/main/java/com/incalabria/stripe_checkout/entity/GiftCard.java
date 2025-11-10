@@ -18,6 +18,9 @@ public class GiftCard {
     private String message;
     private Double amount;
 
+    public GiftCard() {
+    }
+
     public GiftCard(GiftCardType type, String sender, String receiver, String message) {
         this.type = type;
         this.sender = sender;

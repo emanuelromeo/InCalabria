@@ -55,6 +55,10 @@ public class GiftCardService {
         throw new IllegalStateException("Impossibile generare un codice giftcard unico");
     }
 
+    public Optional<GiftCard> getGiftCard(String code) {
+        return repository.findByCode(code);
+    }
+
     public Session createCheckoutSession(GiftCardWebhookData giftCard) throws StripeException {
 
         long amountInCents = giftCard.getType().getAmount() * 100L;
@@ -343,16 +347,16 @@ public class GiftCardService {
         return sb.toString();
     }
 
-    public Double withdrawFromGiftCard(String code, double amount) {
+    // Reduces amount by GiftCard value
+    public Optional<GiftCard> withdrawFromGiftCard(String code, double amount) {
+
         Optional<GiftCard> giftCard = repository.findByCode(code);
         if (giftCard.isPresent()) {
-            double initialAmount = giftCard.get().getAmount();
-            double leftAmount = Math.max(0, initialAmount - amount);
-            giftCard.get().setAmount(leftAmount);
-            repository.save(giftCard.get());
-            return initialAmount - leftAmount;
+            giftCard.get().setAmount(Math.max(0, giftCard.get().getAmount() - amount));
+            return Optional.of(repository.save(giftCard.get()));
         }
-        return 0.0;
+
+        return Optional.empty();
     }
 
 }

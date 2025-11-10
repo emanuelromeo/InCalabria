@@ -3,7 +3,7 @@ package com.incalabria.stripe_checkout.extractor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
-import com.incalabria.stripe_checkout.data.booking.Customer;
+import com.incalabria.stripe_checkout.data.Customer;
 import com.incalabria.stripe_checkout.data.booking.Others;
 import com.stripe.model.checkout.Session;
 import org.springframework.stereotype.Component;
@@ -36,18 +36,7 @@ public class BookingWebhookDataExtractor {
 
         return new BookingWebhookData(
                 session.getId(),
-                new Customer(
-                        session.getCustomerDetails().getName(),
-                        session.getCustomerDetails().getEmail(),
-                        session.getCustomerDetails().getPhone(),
-                        session.getCustomFields().stream()
-                                .filter(field -> "taxId".equals(field.getKey()))
-                                .map(field -> field.getText() != null ? field.getText().getValue() : null)
-                                .filter(java.util.Objects::nonNull)
-                                .findFirst()
-                                .orElse(null),
-                        session.getCustomerDetails().getAddress()
-                ),
+                new Customer(session),
                 metadata.get("experience"),
                 metadata.get("participants"),
                 metadata.get("date"),
@@ -55,7 +44,9 @@ public class BookingWebhookDataExtractor {
                 metadata.get("pickup"),
                 others,
                 metadata.get("needs"),
-                session.getAmountTotal() / 100.0
+                session.getAmountTotal() / 100.0,
+                metadata.get("code"),
+                Double.parseDouble(metadata.get("discount"))
         );
     }
 }

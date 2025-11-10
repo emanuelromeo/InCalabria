@@ -3,6 +3,7 @@ package com.incalabria.stripe_checkout.handler;
 import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
 import com.incalabria.stripe_checkout.data.booking.Others;
 import com.incalabria.stripe_checkout.extractor.BookingWebhookDataExtractor;
+import com.incalabria.stripe_checkout.service.GiftCardService;
 import com.incalabria.stripe_checkout.service.SendGridEmailService;
 import com.stripe.model.checkout.Session;
 import org.slf4j.Logger;
@@ -25,6 +26,9 @@ public class BookingWebhookHandler {
     @Autowired
     private SendGridEmailService sendGridEmailService;
 
+    @Autowired
+    private GiftCardService giftCardService;
+
     @Value("${email.to}")
     private String adminEmail;
 
@@ -32,6 +36,9 @@ public class BookingWebhookHandler {
         log.info("Handling booking purchase for session: {}", session.getId());
 
         BookingWebhookData bookingData = dataExtractor.extractBookingData(session);
+        if (bookingData.getDiscount() > 0) {
+            giftCardService.withdrawFromGiftCard(bookingData.getCode(), bookingData.getDiscount());
+        }
 
         sendAdminConfirmationEmail(bookingData);
         sendCustomerConfirmationEmail(bookingData);
@@ -85,7 +92,12 @@ public class BookingWebhookHandler {
             text.append("Needs: ").append(data.getNeeds()).append("\n");
         }
 
-        text.append("Total: ").append(String.format("%.2f", data.getTotal())).append("€");
+        if (data.getCode() != null) {
+            text.append("Code: ").append(data.getCode()).append("\n");
+            text.append("Discount: ").append(String.format("%.2f€", data.getDiscount())).append("\n");
+        }
+
+        text.append("Total: ").append(String.format("%.2f€", data.getTotal()));
 
         return text.toString();
     }

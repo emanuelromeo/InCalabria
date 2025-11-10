@@ -1,5 +1,7 @@
 package com.incalabria.stripe_checkout.data.booking;
 
+import com.incalabria.stripe_checkout.data.Customer;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,8 +16,10 @@ public class BookingWebhookData {
     private List<Others> others;
     private String needs;
     private double total;
+    private String code;
+    private double discount;
 
-    public BookingWebhookData(String sessionId, Customer customer, String experience, String participants, String date, String time, String pickup, List<Others> others, String needs, double total) {
+    public BookingWebhookData(String sessionId, Customer customer, String experience, String participants, String date, String time, String pickup, List<Others> others, String needs, double total, String code, double discount) {
         this.sessionId = sessionId;
         this.customer = customer;
         this.experience = experience;
@@ -26,8 +30,9 @@ public class BookingWebhookData {
         this.others = others;
         this.needs = needs;
         this.total = total;
+        this.code = code;
+        this.discount = discount;
     }
-
 
     public boolean hasOtherRequests() {
         return others != null && !others.isEmpty();
@@ -118,6 +123,22 @@ public class BookingWebhookData {
 
     public void setTotal(double total) {
         this.total = total;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public double getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(double discount) {
+        this.discount = discount;
     }
 
     public String getBookingDescription() {

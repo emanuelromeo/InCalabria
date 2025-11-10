@@ -4,9 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.incalabria.stripe_checkout.config.StripeProperties;
 import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
+import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Coupon;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.CouponCreateParams;
 import com.stripe.param.PaymentIntentCaptureParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.slf4j.Logger;
@@ -16,8 +19,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class BookingService {
@@ -25,20 +31,33 @@ public class BookingService {
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private final String appDomain;
     private final SendGridEmailService sendGridEmailService;
+    private final GiftCardService giftCardService;
 
     @Autowired
     public BookingService(StripeProperties stripeProperties,
                           @Value("${app.domain}") String appDomain,
-                          SendGridEmailService sendGridEmailService) {
+                          SendGridEmailService sendGridEmailService,
+                          GiftCardService giftCardService) {
         this.appDomain = appDomain;
         this.sendGridEmailService = sendGridEmailService;
+        this.giftCardService = giftCardService;
         com.stripe.Stripe.apiKey = stripeProperties.getApi().getSecretKey();
     }
 
     public Session createCheckoutSession(BookingWebhookData booking) throws StripeException {
+
         log.info("Booking info:\n{}", booking);
-        long baseAmountInCents = (long) (booking.getTotal() * 100);
+
+        double discount = 0;
+
+        Optional<GiftCard> giftCard = giftCardService.getGiftCard(booking.getCode());
+        if (!giftCard.isEmpty()) {
+            discount = Math.min(giftCard.get().getAmount(), booking.getTotal());
+        }
+
+        long baseAmountInCents = (long) ((booking.getTotal() - discount) * 100);
         long commissionAmount = (long) (baseAmountInCents * 0.04);
+
 
         // Riga esperienza principale
         SessionCreateParams.LineItem baseItem = SessionCreateParams.LineItem.builder()
@@ -47,7 +66,8 @@ public class BookingService {
                         .setUnitAmount(baseAmountInCents)
                         .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                 .setName(booking.getExperience())
-                                .setDescription(booking.getBookingDescription())
+                                .setDescription(booking.getBookingDescription() +
+                                                (booking.getCode() != null ? String.format(" | Sconto applicato di %.2f€", discount) : ""))
                                 .build())
                         .build())
                 .setQuantity(1L)
@@ -80,6 +100,8 @@ public class BookingService {
         metadata.put("time", booking.getTime());
         metadata.put("needs", booking.getNeeds());
         metadata.put("pickup", booking.getPickup());
+        metadata.put("code", booking.getCode());
+        metadata.put("discount", String.valueOf(discount));
 
         if (booking.hasOtherRequests()) {
             ObjectMapper objectMapper = new ObjectMapper();
