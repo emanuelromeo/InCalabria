@@ -4,7 +4,7 @@ public enum GiftCardType {
     GOLD(
             150,
             "#8C7236", "#B99645", "#F6CD61", "#BD9E40", "#C19F47", "#907A23",
-            "#5d4b23",
+            "#2D2001",
             "https://i.postimg.cc/tTVJ85gh/In-Calabria-gold.png",
             true,
             "#d0b450"
@@ -12,7 +12,7 @@ public enum GiftCardType {
     SILVER(
             80,
             "#878787", "#BDBDBD", "#F4F4F4", "#C1C1C1", "#C9C9C9", "#979797",
-            "#7A7A7A",  // Schiarito da #5D5D5D (più grigio chiaro)
+            "#333333",  // Schiarito da #5D5D5D (più grigio chiaro)
             "https://i.postimg.cc/mk39x3SD/In-Calabria-silver.png",
             true,
             "#d0d0d0"
