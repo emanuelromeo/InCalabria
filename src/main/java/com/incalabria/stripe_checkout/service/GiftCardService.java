@@ -89,6 +89,18 @@ public class GiftCardService {
         SessionCreateParams params = SessionCreateParams.builder()
                 .addLineItem(item)
                 .setMode(SessionCreateParams.Mode.PAYMENT)
+                .addCustomField(
+                        SessionCreateParams.CustomField.builder()
+                                .setKey("taxId")
+                                .setLabel(
+                                        SessionCreateParams.CustomField.Label.builder()
+                                                .setType(SessionCreateParams.CustomField.Label.Type.CUSTOM)
+                                                .setCustom("Codice Fiscale (o P.IVA)")
+                                                .build()
+                                )
+                                .setType(SessionCreateParams.CustomField.Type.TEXT)
+                                .build()
+                )
                 .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
                 .setPhoneNumberCollection(SessionCreateParams.PhoneNumberCollection.builder().setEnabled(true).build())
                 .putAllMetadata(metadata)
