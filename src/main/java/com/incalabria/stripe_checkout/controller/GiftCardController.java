@@ -40,5 +40,25 @@ public class GiftCardController {
         return ResponseEntity.ok(Map.of("url", session.getUrl()));
     }
 
+    @GetMapping(value = "/generate-image", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> generateGiftCardImage(
+            @RequestParam GiftCardType type,
+            @RequestParam String giftCardId,
+            @RequestParam String receiver,
+            @RequestParam String message,
+            @RequestParam String sender) throws IOException {
+
+        byte[] imageBytes = service.generateGiftCardImage(new GiftCard(type, sender, receiver, message));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=giftcard_" + type.name().toLowerCase() + "_" + giftCardId + ".png")
+                .contentType(MediaType.IMAGE_PNG)
+                .body(imageBytes);
+    }
+
+
+
+
 }
 

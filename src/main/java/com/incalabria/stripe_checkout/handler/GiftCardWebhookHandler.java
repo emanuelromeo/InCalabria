@@ -60,19 +60,23 @@ public class GiftCardWebhookHandler {
         );
 
         String customerEmailText = String.format("""
-            Code: %s
-            Type: %s
-            Sender: %s
-            Receiver: %s
-            Message: %s
-            Customer: %s
+            Ciao %s,
+            
+            Grazie per aver scelto InCalabria per il tuo regalo speciale.
+            In allegato trovi la %s digitale, pronta da inoltrare alla persona a cui vuoi donarla.
+            
+            La card contiene il codice univoco "%s" che potrà essere utilizzato per prenotare una delle nostre esperienze: tour, degustazioni, attività outdoor, visite guidate e molto altro — tutto nel cuore della Calabria più autentica.
+            
+            Scopri tutte le esperienze disponibili su www.incalabria.net.
+            
+            Un regalo che profuma di mare, montagna e tradizione.
+            Buona esperienza!
+            
+            Il team di InCalabria
             """,
-                giftCard.getCode(),
-                giftCard.getType(),
-                giftCard.getSender(),
-                giftCard.getReceiver(),
-                giftCard.getMessage(),
-                customer
+                customer.getName(),
+                giftCard.getType().getName(),
+                giftCard.getCode()
         );
 
         // Codifica l'immagine in Base64
@@ -86,10 +90,10 @@ public class GiftCardWebhookHandler {
         attachments.setDisposition("inline"); // oppure "attachment"
         attachments.setContentId("giftcardImage");
 
-        sendGridEmailService.sendEmail(adminEmail, "GiftCard acquistata", adminEmailText, attachments);
+        sendGridEmailService.sendEmail(adminEmail, giftCard.getType().getName() + " acquistata", adminEmailText, attachments);
         log.info("Admin gift card notification email sent");
 
-        sendGridEmailService.sendEmail(customer.getEmail(), "GiftCard acquistata", customerEmailText, attachments);
+        sendGridEmailService.sendEmail(customer.getEmail(), "La tua " + giftCard.getType().getName() + " è pronta!", customerEmailText, attachments);
         log.info("Customer gift card notification email sent");
     }
 }

@@ -2,7 +2,8 @@ package com.incalabria.stripe_checkout.enumeration;
 
 public enum GiftCardType {
     GOLD(
-            150,
+            "GoldCard",
+            130,
             "#8C7236", "#B99645", "#F6CD61", "#BD9E40", "#C19F47", "#907A23",
             "#2D2001",
             "https://i.postimg.cc/tTVJ85gh/In-Calabria-gold.png",
@@ -10,6 +11,7 @@ public enum GiftCardType {
             "#d0b450"
     ),
     SILVER(
+            "SilverCard",
             80,
             "#878787", "#BDBDBD", "#F4F4F4", "#C1C1C1", "#C9C9C9", "#979797",
             "#333333",  // Schiarito da #5D5D5D (più grigio chiaro)
@@ -18,6 +20,7 @@ public enum GiftCardType {
             "#d0d0d0"
     ),
     BLACK(
+            "BlackCard",
             50,
             "#090909", "#0E0E0E", "#252525", "#000000", "#1B1B1B", "#090909",
             "#FFFFFF",
@@ -26,6 +29,7 @@ public enum GiftCardType {
             null
     ),
     GREEN(
+            "GreenCard",
             30,
             "#024035", "#04473B", "#065C4D", "#034337", "#025547", "#024035",
             "#FFFFFF",
@@ -34,6 +38,7 @@ public enum GiftCardType {
             null
     );
 
+    private final String name;
     private final int amount;
     private final String gradientColor1;
     private final String gradientColor2;
@@ -47,6 +52,7 @@ public enum GiftCardType {
     private final String shadowColor;
 
     GiftCardType(
+            String name,
             int amount,
             String gradientColor1, String gradientColor2, String gradientColor3,
             String gradientColor4, String gradientColor5, String gradientColor6,
@@ -54,6 +60,7 @@ public enum GiftCardType {
             String logoUrl,
             boolean hasInnerShadow,
             String shadowColor) {
+        this.name = name;
         this.amount = amount;
         this.gradientColor1 = gradientColor1;
         this.gradientColor2 = gradientColor2;
@@ -67,6 +74,7 @@ public enum GiftCardType {
         this.shadowColor = shadowColor;
     }
 
+    public String getName() { return name; }
     public int getAmount() { return amount; }
     public String getGradientColor1() { return gradientColor1; }
     public String getGradientColor2() { return gradientColor2; }
