@@ -65,7 +65,7 @@ public class GiftCardWebhookHandler {
             Grazie per aver scelto InCalabria per il tuo regalo speciale.
             In allegato trovi la %s digitale, pronta da inoltrare alla persona a cui vuoi donarla.
             
-            La card contiene il codice univoco "%s" che potrà essere utilizzato per prenotare una delle nostre esperienze: tour, degustazioni, attività outdoor, visite guidate e molto altro — tutto nel cuore della Calabria più autentica.
+            La card contiene il codice univoco "%s" che potrà essere utilizzato per riscattare lo sconto di %d€ su una qualunque delle nostre esperienze: tour, degustazioni, attività outdoor, visite guidate e molto altro — tutto nel cuore della Calabria più autentica.
             
             Scopri tutte le esperienze disponibili su www.incalabria.net.
             
@@ -76,7 +76,8 @@ public class GiftCardWebhookHandler {
             """,
                 customer.getName(),
                 giftCard.getType().getName(),
-                giftCard.getCode()
+                giftCard.getCode(),
+                giftCard.getType().getAmount()
         );
 
         // Codifica l'immagine in Base64
