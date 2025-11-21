@@ -22,7 +22,6 @@ public class HealthCheckScheduler {
     public void callHealthEndpoint() {
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(HEALTH_URL, String.class);
-            log.info("Health check at {}: Status Code {}", Instant.now(), response.getStatusCodeValue());
         } catch (Exception e) {
             log.error("Error during health check at {}: {}", Instant.now(), e.getMessage());
         }
