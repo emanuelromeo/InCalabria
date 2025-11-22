@@ -7,10 +7,12 @@ import com.incalabria.stripe_checkout.enumeration.GiftCardType;
 import com.incalabria.stripe_checkout.service.GiftCardService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
+import org.hibernate.mapping.Any;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +42,16 @@ public class GiftCardController {
         return ResponseEntity.ok(Map.of("url", session.getUrl()));
     }
 
+    @GetMapping("/test")
+    public ResponseEntity<String> handleGiftCardPurchase() {
+        try {
+            service.TEST();
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatusCode.valueOf(500)).build();
+        }
+        return ResponseEntity.ok("Test sent");
+    }
+
     @GetMapping(value = "/generate-image", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateGiftCardImage(
             @RequestParam GiftCardType type,
@@ -48,7 +60,9 @@ public class GiftCardController {
             @RequestParam String message,
             @RequestParam String sender) throws IOException {
 
-        byte[] imageBytes = service.generateGiftCardImage(new GiftCard(type, sender, receiver, message));
+        GiftCard giftCard = new GiftCard(type, sender, receiver, message);
+        giftCard.setCode(giftCardId);
+        byte[] imageBytes = service.generateGiftCardImage(giftCard);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,

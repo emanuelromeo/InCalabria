@@ -1,6 +1,7 @@
 package com.incalabria.stripe_checkout.service;
 
 import com.incalabria.stripe_checkout.config.StripeProperties;
+import com.incalabria.stripe_checkout.data.Customer;
 import com.incalabria.stripe_checkout.data.giftcard.GiftCardWebhookData;
 import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.incalabria.stripe_checkout.enumeration.GiftCardType;
@@ -11,6 +12,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.ScreenshotType;
+import com.sendgrid.helpers.mail.objects.Attachments;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -22,12 +24,16 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class GiftCardService {
+
+    @Autowired
+    private SendGridEmailService sendGridEmailService;
 
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private final String appDomain;
@@ -369,6 +375,20 @@ public class GiftCardService {
         }
 
         return Optional.empty();
+    }
+
+
+    public void TEST() throws IOException {
+
+        String customerEmailText = String.format("""
+
+            
+            Il team di InCalabria
+            """
+        );
+
+        sendGridEmailService.sendEmail("emanuel.romeo@hotmail.com", "La tua è pronta!", customerEmailText);
+        log.info("Customer gift card notification email sent");
     }
 
 }
