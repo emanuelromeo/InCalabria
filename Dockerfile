@@ -7,7 +7,7 @@ RUN mvn clean package -DskipTests
 # Runtime stage con base Playwright ufficiale (Debian)
 FROM mcr.microsoft.com/playwright:focal
 
-# Install Java 17 OpenJDK
+# Installa Java 17 OpenJDK
 RUN apt-get update && \
     apt-get install -y openjdk-17-jdk && \
     apt-get clean
@@ -17,10 +17,11 @@ ENV PATH=$JAVA_HOME/bin:$PATH
 
 WORKDIR /app
 
-# Copia jar buildato
-COPY --from=build /app/target/stripe-checkout-0.0.1-SNAPSHOT.jar app.jar
+# Forza l’installazione dei browser e dipendenze durante la build
+RUN npx playwright install --with-deps
 
-# Assicura che i browser Playwright siano installati (opzionale, perché già preinstallati nell'immagine)
+# Copia il jar buildato dal build stage
+COPY --from=build /app/target/stripe-checkout-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 
