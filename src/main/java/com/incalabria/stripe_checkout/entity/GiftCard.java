@@ -9,6 +9,8 @@ public class GiftCard {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(unique = true, name = "session_id")
+    private String sessionId;
     @Column(unique = true)
     private String code;
     @Enumerated(EnumType.STRING)
@@ -37,6 +39,14 @@ public class GiftCard {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 
     public String getCode() {

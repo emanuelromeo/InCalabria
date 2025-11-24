@@ -1,18 +1,16 @@
 package com.incalabria.stripe_checkout.controller;
 
-import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
 import com.incalabria.stripe_checkout.data.giftcard.GiftCardWebhookData;
 import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.incalabria.stripe_checkout.enumeration.GiftCardType;
+import com.incalabria.stripe_checkout.repository.GiftCardRepository;
 import com.incalabria.stripe_checkout.service.GiftCardService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
-import org.hibernate.mapping.Any;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +27,9 @@ public class GiftCardController {
     @Autowired
     private GiftCardService service;
 
+    @Autowired
+    private GiftCardRepository repository;
+
     @PostMapping("/create-checkout-session")
     public ResponseEntity<Map<String, String>> createCheckoutSession(@RequestBody GiftCardWebhookData giftCard) {
         Session session;
@@ -43,15 +44,11 @@ public class GiftCardController {
     }
 
     @GetMapping("/test")
-    public ResponseEntity<String> handleGiftCardPurchase() {
-        try {
-            service.TEST();
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatusCode.valueOf(500)).build();
-        }
-        return ResponseEntity.ok("Test sent");
+    public ResponseEntity<Boolean> test(@RequestParam String session_id) {
+       return ResponseEntity.ok(repository.existsBySessionId(session_id));
     }
 
+    // TEST endpoint
     @GetMapping(value = "/generate-image", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateGiftCardImage(
             @RequestParam GiftCardType type,

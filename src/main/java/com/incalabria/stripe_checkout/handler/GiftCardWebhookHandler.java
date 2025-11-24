@@ -11,10 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 public class GiftCardWebhookHandler {
@@ -36,10 +38,18 @@ public class GiftCardWebhookHandler {
     /**
      * Gestisce l'acquisto di una giftcard estratta dalla sessione Stripe
      */
+    @Async
     public void handleGiftCardPurchase(Session session) throws IOException {
         log.info("Handling gift card purchase for session: {}", session.getId());
 
-        GiftCard giftCard = service.saveGiftCard(dataExtractor.extractGiftCardData(session).toGiftCard());
+        if (service.existsBySession(session)) {
+            return;
+        }
+
+        GiftCard extractedGiftCard = dataExtractor.extractGiftCardData(session).toGiftCard();
+        extractedGiftCard.setSessionId(session.getId());
+        GiftCard giftCard = service.saveGiftCard(extractedGiftCard);
+
         Customer customer = new Customer(session);
         byte[] image = service.generateGiftCardImage(giftCard);
 
