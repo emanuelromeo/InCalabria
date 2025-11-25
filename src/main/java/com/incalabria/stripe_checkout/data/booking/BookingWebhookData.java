@@ -15,11 +15,12 @@ public class BookingWebhookData {
     private String pickup;
     private List<Others> others;
     private String needs;
+    private Language language;
     private double total;
     private String code;
     private double discount;
 
-    public BookingWebhookData(String sessionId, Customer customer, String experience, String participants, String date, String time, String pickup, List<Others> others, String needs, double total, String code, double discount) {
+    public BookingWebhookData(String sessionId, Customer customer, String experience, String participants, String date, String time, String pickup, List<Others> others, String needs, double total, String code, double discount, Language language) {
         this.sessionId = sessionId;
         this.customer = customer;
         this.experience = experience;
@@ -32,6 +33,7 @@ public class BookingWebhookData {
         this.total = total;
         this.code = code;
         this.discount = discount;
+        this.language = language;
     }
 
     public boolean hasOtherRequests() {
@@ -44,6 +46,15 @@ public class BookingWebhookData {
 
 
     //getter and setter
+
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
 
     public Customer getCustomer() {
         return customer;

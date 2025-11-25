@@ -4,13 +4,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.incalabria.stripe_checkout.config.StripeProperties;
 import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
+import com.incalabria.stripe_checkout.entity.Booking;
 import com.incalabria.stripe_checkout.entity.GiftCard;
+import com.incalabria.stripe_checkout.extractor.BookingWebhookDataExtractor;
+import com.incalabria.stripe_checkout.repository.BookingRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Coupon;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.CouponCreateParams;
 import com.stripe.param.PaymentIntentCaptureParams;
+import com.stripe.param.TransferCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +25,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,15 +39,21 @@ public class BookingService {
     private final String appDomain;
     private final SendGridEmailService sendGridEmailService;
     private final GiftCardService giftCardService;
+    private final BookingRepository bookingRepository;
+    private final BookingWebhookDataExtractor bookingWebhookDataExtractor;
 
     @Autowired
     public BookingService(StripeProperties stripeProperties,
                           @Value("${app.domain}") String appDomain,
                           SendGridEmailService sendGridEmailService,
-                          GiftCardService giftCardService) {
+                          GiftCardService giftCardService,
+                          BookingRepository bookingRepository,
+                          BookingWebhookDataExtractor bookingWebhookDataExtractor) {
         this.appDomain = appDomain;
         this.sendGridEmailService = sendGridEmailService;
         this.giftCardService = giftCardService;
+        this.bookingRepository = bookingRepository;
+        this.bookingWebhookDataExtractor = bookingWebhookDataExtractor;
         com.stripe.Stripe.apiKey = stripeProperties.getApi().getSecretKey();
     }
 
@@ -102,6 +115,7 @@ public class BookingService {
         metadata.put("pickup", booking.getPickup());
         metadata.put("code", booking.getCode());
         metadata.put("discount", String.valueOf(discount));
+        metadata.put("language", booking.getLanguage().name());
 
         if (booking.hasOtherRequests()) {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -159,7 +173,53 @@ public class BookingService {
         paymentIntent.capture(PaymentIntentCaptureParams.builder().build());
         log.info("Payment Intent successfully captured");
 
+        BookingWebhookData bookingWebhookData = bookingWebhookDataExtractor.extractBookingData(session);
+        saveBooking(bookingWebhookData);
+        log.info("Booking successfully saved");
     }
+
+    public void capturePaymentIntentAndTransferToProvider(
+            String sessionId,
+            String connectedAccountId,
+            int providerPercentage // 78 o 80
+    ) throws StripeException {
+        Session session = retrieveSession(sessionId);
+        log.info("Session with ID " + sessionId + " successfully retrieved");
+
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
+        log.info("Payment Intent retrieved: " + paymentIntent);
+
+        // 1. Cattura il PaymentIntent
+        paymentIntent = paymentIntent.capture(
+                PaymentIntentCaptureParams.builder().build()
+        );
+        log.info("Payment Intent successfully captured: " + paymentIntent.getId());
+
+        // 2. Recupera la charge associata (latest_charge)
+        String chargeId = paymentIntent.getLatestCharge();
+        if (chargeId == null) {
+            throw new IllegalStateException("No charge found on PaymentIntent " + paymentIntent.getId());
+        }
+        log.info("Latest charge ID: " + chargeId);
+
+        // 3. Calcola importo da mandare al fornitore
+        long totalAmount = paymentIntent.getAmount(); // in centesimi
+        long amountToProvider = Math.round(totalAmount * (providerPercentage / 100.0));
+        log.info("Total amount: " + totalAmount + " - amount to provider ("
+                + providerPercentage + "%): " + amountToProvider);
+
+        // 4. Crea il Transfer verso il fornitore
+        TransferCreateParams transferParams = TransferCreateParams.builder()
+                .setAmount(amountToProvider)
+                .setCurrency(paymentIntent.getCurrency())
+                .setDestination(connectedAccountId)
+                .setSourceTransaction(chargeId) // collega il transfer a questa charge
+                .build();
+
+        Transfer transfer = Transfer.create(transferParams);
+        log.info("Transfer created to provider " + connectedAccountId + ": " + transfer.getId());
+    }
+
 
     public void cancelPaymentIntent(String sessionId) throws StripeException {
         Session session = retrieveSession(sessionId);
@@ -218,4 +278,16 @@ public class BookingService {
             log.info("Cancellation email sent to the customer");
         }
     }
+
+    public void saveBooking(BookingWebhookData data) {
+        Booking b = new Booking();
+        b.setSessionId(data.getSessionId());
+        b.setCustomerEmail(data.getCustomer().getEmail());
+        b.setCustomerName(data.getCustomer().getName());
+        b.setExperienceDate(LocalDate.parse(data.getDate()));
+        b.setLanguage(data.getLanguage());
+        b.setReviewEmailSent(false);
+        bookingRepository.save(b);
+    }
+
 }

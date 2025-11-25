@@ -92,6 +92,8 @@ public class BookingWebhookHandler {
             text.append("Needs: ").append(data.getNeeds()).append("\n");
         }
 
+        text.append("Language: ").append(data.getLanguage().name()).append("\n");
+
         if (data.getCode() != null) {
             text.append("Code: ").append(data.getCode()).append("\n");
             text.append("Discount: ").append(String.format("%.2f€", data.getDiscount())).append("\n");

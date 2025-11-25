@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
 import com.incalabria.stripe_checkout.data.Customer;
+import com.incalabria.stripe_checkout.data.booking.Language;
 import com.incalabria.stripe_checkout.data.booking.Others;
 import com.stripe.model.checkout.Session;
 import org.springframework.stereotype.Component;
@@ -46,7 +47,8 @@ public class BookingWebhookDataExtractor {
                 metadata.get("needs"),
                 session.getAmountTotal() / 100.0,
                 metadata.get("code"),
-                Double.parseDouble(metadata.get("discount"))
+                Double.parseDouble(metadata.get("discount")),
+                Language.valueOf(metadata.get("language"))
         );
     }
 }
