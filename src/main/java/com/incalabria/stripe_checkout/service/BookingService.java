@@ -80,7 +80,7 @@ public class BookingService {
                         .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                 .setName(booking.getExperience())
                                 .setDescription(booking.getBookingDescription() +
-                                                (booking.getCode() != null ? String.format(" | Sconto applicato di %.2f€", discount) : ""))
+                                                (booking.getCode() != null && !booking.getCode().isEmpty() ? String.format(" | Sconto applicato di %.2f€", discount) : ""))
                                 .build())
                         .build())
                 .setQuantity(1L)
