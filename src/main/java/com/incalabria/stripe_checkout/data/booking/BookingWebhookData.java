@@ -155,10 +155,14 @@ public class BookingWebhookData {
     public String getBookingDescription() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Data: ")
-                .append(date)
-                .append(" | Ora: ")
-                .append(time.equals("morning") ? "mattina" : time.equals("afternoon") ? "pomeriggio" : "errore")
-                .append(" | Numero di partecipanti: ").append(participants);
+                .append(date);
+
+        if (time != null) {
+            stringBuilder.append(" | Ora: ")
+                    .append(time.equals("morning") ? "mattina" : time.equals("afternoon") ? "pomeriggio" : "errore");
+        }
+
+        stringBuilder.append(" | Numero di partecipanti: ").append(participants);
 
         if (hasOtherRequests()) {
             stringBuilder.append(" | Altre richieste: ")

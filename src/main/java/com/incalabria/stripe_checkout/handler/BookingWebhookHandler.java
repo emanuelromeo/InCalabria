@@ -124,8 +124,7 @@ public class BookingWebhookHandler {
                 Dettagli della richiesta:
                 • Esperienza: %s
                 • Data: %s
-                • Orario: %s
-                • Numero di partecipanti: %s
+                %s• Numero di partecipanti: %s
                 %s%s
                 Cosa succede adesso:
                 • La tua richiesta è in fase di approvazione.
@@ -148,10 +147,13 @@ public class BookingWebhookHandler {
     }
 
     private String convertTimeToItalian(String time) {
+        if (time == null) {
+            return "";
+        }
         return switch (time) {
-            case "morning" -> "mattina";
-            case "afternoon" -> "pomeriggio";
-            default -> "?";
+            case "morning" -> "• Orario: mattina\n";
+            case "afternoon" -> "• Orario: pomeriggio\n";
+            default -> "";
         };
     }
 }
