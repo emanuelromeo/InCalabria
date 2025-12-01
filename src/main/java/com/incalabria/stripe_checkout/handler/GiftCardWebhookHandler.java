@@ -39,7 +39,7 @@ public class GiftCardWebhookHandler {
      * Gestisce l'acquisto di una giftcard estratta dalla sessione Stripe
      */
     @Async
-    public void handleGiftCardPurchase(Session session) throws IOException {
+    public void handleGiftCardPurchase(Session session) {
         log.info("Handling gift card purchase for session: {}", session.getId());
 
         if (service.existsBySession(session)) {
@@ -51,7 +51,12 @@ public class GiftCardWebhookHandler {
         GiftCard giftCard = service.saveGiftCard(extractedGiftCard);
 
         Customer customer = new Customer(session);
-        byte[] image = service.generateGiftCardImage(giftCard);
+        byte[] image = null;
+        try {
+            image = service.generateGiftCardImage(giftCard);
+        } catch (IOException e) {
+            log.error("GiftCard image generation failed: {}", e.getMessage());
+        }
 
         String adminEmailText = String.format("""
             Code: %s
@@ -101,10 +106,18 @@ public class GiftCardWebhookHandler {
         attachments.setDisposition("inline"); // oppure "attachment"
         attachments.setContentId("giftcardImage");
 
-        sendGridEmailService.sendEmail(adminEmail, giftCard.getType().getName() + " acquistata", adminEmailText, attachments);
+        try {
+            sendGridEmailService.sendEmail(adminEmail, giftCard.getType().getName() + " acquistata", adminEmailText, attachments);
+        } catch (IOException e) {
+            log.error("Error in admin email: {}", e.getMessage());
+        }
         log.info("Admin gift card notification email sent");
 
-        sendGridEmailService.sendEmail(customer.getEmail(), "La tua " + giftCard.getType().getName() + " è pronta!", customerEmailText, attachments);
+        try {
+            sendGridEmailService.sendEmail(customer.getEmail(), "La tua " + giftCard.getType().getName() + " è pronta!", customerEmailText, attachments);
+        } catch (IOException e) {
+            log.error("Error in customer email: {}", e.getMessage());
+        }
         log.info("Customer gift card notification email sent");
     }
 }

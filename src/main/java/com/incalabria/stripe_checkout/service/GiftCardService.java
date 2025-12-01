@@ -133,8 +133,9 @@ public class GiftCardService {
                             .setViewportSize(950, 1100)
             );
             Page page = context.newPage();
+            page.setDefaultTimeout(60000);
             page.setContent(html);
-            page.waitForLoadState(LoadState.NETWORKIDLE);
+            page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 
             byte[] screenshot = page.screenshot(new Page.ScreenshotOptions()
                     .setFullPage(true)
