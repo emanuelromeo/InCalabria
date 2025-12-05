@@ -40,8 +40,12 @@ public class BookingController {
         return ResponseEntity.ok(Map.of("url", session.getUrl()));
     }
 
-    @PostMapping("/capture-payment-intent/{sessionId}")
-    public ResponseEntity<String> capturePaymentIntent(@PathVariable String sessionId) {
+    @PostMapping("/capture-payment-intent")
+    public ResponseEntity<String> capturePaymentIntent(
+            @RequestParam String sessionId,
+            @RequestParam String connectedAccountId,
+            @RequestParam Integer providerPercentage
+    ) {
         Session session;
 
         try {
@@ -53,7 +57,7 @@ public class BookingController {
         }
 
         try {
-            bookingService.capturePaymentIntent(sessionId);
+            bookingService.capturePaymentIntentAndTransferToProvider(sessionId, connectedAccountId, providerPercentage);
             log.info("PaymentIntent captured successfully");
         } catch (StripeException e) {
             log.error(e.getMessage());

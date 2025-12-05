@@ -9,6 +9,7 @@ import com.incalabria.stripe_checkout.entity.GiftCard;
 import com.incalabria.stripe_checkout.extractor.BookingWebhookDataExtractor;
 import com.incalabria.stripe_checkout.repository.BookingRepository;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Account;
 import com.stripe.model.Coupon;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Transfer;
@@ -163,52 +164,52 @@ public class BookingService {
         return Session.retrieve(sessionId);
     }
 
-    public void capturePaymentIntent(String sessionId) throws StripeException {
-        Session session = retrieveSession(sessionId);
-        log.info("Session with ID " + sessionId + " successfully retrieved");
-
-        PaymentIntent paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
-        log.info("Payment Intent retrieved: " + paymentIntent);
-
-        paymentIntent.capture(PaymentIntentCaptureParams.builder().build());
-        log.info("Payment Intent successfully captured");
-
-        BookingWebhookData bookingWebhookData = bookingWebhookDataExtractor.extractBookingData(session);
-        saveBooking(bookingWebhookData);
-        log.info("Booking successfully saved");
-    }
+//    public void capturePaymentIntent(String sessionId) throws StripeException {
+//        Session session = retrieveSession(sessionId);
+//        log.info("Session with ID {} successfully retrieved", sessionId);
+//
+//        PaymentIntent paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
+//        log.info("Payment Intent retrieved: {}", paymentIntent);
+//
+//        paymentIntent.capture(PaymentIntentCaptureParams.builder().build());
+//        log.info("Payment Intent successfully captured");
+//
+//        BookingWebhookData bookingWebhookData = bookingWebhookDataExtractor.extractBookingData(session);
+//        saveBooking(bookingWebhookData);
+//        log.info("Booking successfully saved");
+//    }
 
     public void capturePaymentIntentAndTransferToProvider(
             String sessionId,
             String connectedAccountId,
-            int providerPercentage // 78 o 80
+            int providerPercentage
     ) throws StripeException {
         Session session = retrieveSession(sessionId);
-        log.info("Session with ID " + sessionId + " successfully retrieved");
+        log.info("Session with ID {} successfully retrieved", sessionId);
 
         PaymentIntent paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
-        log.info("Payment Intent retrieved: " + paymentIntent);
+        log.info("Payment Intent retrieved: {}", paymentIntent);
 
-        // 1. Cattura il PaymentIntent
+        // 1. Cattura il PaymentIntent (autorizzazione -> addebito effettivo)
         paymentIntent = paymentIntent.capture(
                 PaymentIntentCaptureParams.builder().build()
         );
-        log.info("Payment Intent successfully captured: " + paymentIntent.getId());
+        log.info("Payment Intent successfully captured: {}", paymentIntent.getId());
 
-        // 2. Recupera la charge associata (latest_charge)
+        // 2. Prendi la charge associata (latest_charge)
         String chargeId = paymentIntent.getLatestCharge();
         if (chargeId == null) {
             throw new IllegalStateException("No charge found on PaymentIntent " + paymentIntent.getId());
         }
-        log.info("Latest charge ID: " + chargeId);
+        log.info("Latest charge ID: {}", chargeId);
 
-        // 3. Calcola importo da mandare al fornitore
-        long totalAmount = paymentIntent.getAmount(); // in centesimi
-        long amountToProvider = Math.round(totalAmount * (providerPercentage / 100.0));
+        // 3. Calcola la quota del fornitore
+        long totalAmount = paymentIntent.getAmount(); // centesimi
+        long amountToProvider = Math.round(totalAmount * 0.96 * (providerPercentage / 100.0));
         log.info("Total amount: " + totalAmount + " - amount to provider ("
                 + providerPercentage + "%): " + amountToProvider);
 
-        // 4. Crea il Transfer verso il fornitore
+        // 4. Transfer verso il connected account
         TransferCreateParams transferParams = TransferCreateParams.builder()
                 .setAmount(amountToProvider)
                 .setCurrency(paymentIntent.getCurrency())
@@ -217,16 +218,22 @@ public class BookingService {
                 .build();
 
         Transfer transfer = Transfer.create(transferParams);
-        log.info("Transfer created to provider " + connectedAccountId + ": " + transfer.getId());
+        log.info("Transfer created to provider {}: {}", connectedAccountId, transfer.getId());
+
+        // 5. Salva la booking come confermata, ecc.
+        BookingWebhookData bookingWebhookData = bookingWebhookDataExtractor.extractBookingData(session);
+        saveBooking(bookingWebhookData, connectedAccountId);
+        log.info("Booking successfully saved");
     }
+
 
 
     public void cancelPaymentIntent(String sessionId) throws StripeException {
         Session session = retrieveSession(sessionId);
-        log.info("Session with ID " + sessionId + " successfully retrieved");
+        log.info("Session with ID {} successfully retrieved", sessionId);
 
         PaymentIntent paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
-        log.info("Payment Intent retrieved: " + paymentIntent);
+        log.info("Payment Intent retrieved: {}", paymentIntent);
 
         paymentIntent.cancel();
         log.info("Payment Intent successfully cancelled");
@@ -279,14 +286,19 @@ public class BookingService {
         }
     }
 
-    public void saveBooking(BookingWebhookData data) {
+    public void saveBooking(BookingWebhookData data, String connectedAccountId) throws StripeException {
         Booking b = new Booking();
         b.setSessionId(data.getSessionId());
         b.setCustomerEmail(data.getCustomer().getEmail());
         b.setCustomerName(data.getCustomer().getName());
+        b.setCustomerNumber(data.getCustomer().getPhone());
         b.setExperienceDate(LocalDate.parse(data.getDate()));
         b.setLanguage(data.getLanguage());
         b.setReviewEmailSent(false);
+        Account connectedAccount = Account.retrieve(connectedAccountId);
+        b.setSupplerEmail(connectedAccount.getEmail());
+        b.setSupplierName(connectedAccount.getBusinessProfile().getName());
+        b.setSupplierNumber(connectedAccount.getBusinessProfile().getSupportPhone());
         bookingRepository.save(b);
     }
 

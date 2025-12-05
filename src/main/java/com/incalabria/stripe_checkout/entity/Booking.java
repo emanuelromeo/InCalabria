@@ -14,6 +14,10 @@ public class Booking {
     private String sessionId;
     private String customerEmail;
     private String customerName;
+    private String customerNumber;
+    private String supplerEmail;
+    private String supplierName;
+    private String supplierNumber;
     private LocalDate experienceDate;
     @Enumerated(EnumType.STRING)
     private Language language;
@@ -51,6 +55,14 @@ public class Booking {
         this.customerName = customerName;
     }
 
+    public String getCustomerNumber() {
+        return customerNumber;
+    }
+
+    public void setCustomerNumber(String customerNumber) {
+        this.customerNumber = customerNumber;
+    }
+
     public LocalDate getExperienceDate() {
         return experienceDate;
     }
@@ -73,5 +85,29 @@ public class Booking {
 
     public void setReviewEmailSent(boolean reviewEmailSent) {
         this.reviewEmailSent = reviewEmailSent;
+    }
+
+    public String getSupplerEmail() {
+        return supplerEmail;
+    }
+
+    public void setSupplerEmail(String supplerEmail) {
+        this.supplerEmail = supplerEmail;
+    }
+
+    public String getSupplierName() {
+        return supplierName;
+    }
+
+    public void setSupplierName(String supplierName) {
+        this.supplierName = supplierName;
+    }
+
+    public String getSupplierNumber() {
+        return supplierNumber;
+    }
+
+    public void setSupplierNumber(String supplierNumber) {
+        this.supplierNumber = supplierNumber;
     }
 }
