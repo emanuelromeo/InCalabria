@@ -295,6 +295,7 @@ public class GiftCardService {
             %s
             text-align: left;
             width: 100%%;
+            white-space: pre-wrap;
         }
 
         .sender-name {

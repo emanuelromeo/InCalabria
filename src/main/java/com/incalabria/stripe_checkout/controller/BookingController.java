@@ -103,4 +103,5 @@ public class BookingController {
 
         return ResponseEntity.ok("PaymentIntent cancelled successfully.");
     }
+
 }
