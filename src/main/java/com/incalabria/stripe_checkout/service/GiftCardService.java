@@ -30,7 +30,7 @@ import java.util.Optional;
 public class GiftCardService {
 
     @Autowired
-    private SendGridEmailService sendGridEmailService;
+    private EmailService emailService;
 
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private final String appDomain;

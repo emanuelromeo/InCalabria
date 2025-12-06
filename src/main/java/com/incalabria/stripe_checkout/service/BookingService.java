@@ -10,11 +10,9 @@ import com.incalabria.stripe_checkout.extractor.BookingWebhookDataExtractor;
 import com.incalabria.stripe_checkout.repository.BookingRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
-import com.stripe.model.Coupon;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
-import com.stripe.param.CouponCreateParams;
 import com.stripe.param.PaymentIntentCaptureParams;
 import com.stripe.param.TransferCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -25,10 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -38,7 +33,7 @@ public class BookingService {
 
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private final String appDomain;
-    private final SendGridEmailService sendGridEmailService;
+    private final EmailService emailService;
     private final GiftCardService giftCardService;
     private final BookingRepository bookingRepository;
     private final BookingWebhookDataExtractor bookingWebhookDataExtractor;
@@ -46,12 +41,12 @@ public class BookingService {
     @Autowired
     public BookingService(StripeProperties stripeProperties,
                           @Value("${app.domain}") String appDomain,
-                          SendGridEmailService sendGridEmailService,
+                          EmailService emailService,
                           GiftCardService giftCardService,
                           BookingRepository bookingRepository,
                           BookingWebhookDataExtractor bookingWebhookDataExtractor) {
         this.appDomain = appDomain;
-        this.sendGridEmailService = sendGridEmailService;
+        this.emailService = emailService;
         this.giftCardService = giftCardService;
         this.bookingRepository = bookingRepository;
         this.bookingWebhookDataExtractor = bookingWebhookDataExtractor;
@@ -258,7 +253,7 @@ public class BookingService {
                     A presto,
                     Il team di InCalabria
                     """, customerName, amount, experience);
-            sendGridEmailService.sendEmail(customerEmail, "Prenotazione confermata!", emailText);
+            emailService.sendEmail(customerEmail, "Prenotazione confermata!", emailText);
             log.info("Confirmation email sent to the customer");
         }
     }
@@ -281,7 +276,7 @@ public class BookingService {
                     Grazie ancora per la fiducia,
                     Il team di InCalabria
                     """, customerName, experience);
-            sendGridEmailService.sendEmail(customerEmail, "Richiesta rifiutata", emailText);
+            emailService.sendEmail(customerEmail, "Richiesta rifiutata", emailText);
             log.info("Cancellation email sent to the customer");
         }
     }

@@ -61,6 +61,12 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- WebClient (reactive HTTP client) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
 		<!-- Java -->
 		<dependency>
 			<groupId>javax.annotation</groupId>
@@ -73,13 +79,6 @@
 			<groupId>com.stripe</groupId>
 			<artifactId>stripe-java</artifactId>
 			<version>29.5.0</version>
-		</dependency>
-
-		<!-- SendGrid -->
-		<dependency>
-			<groupId>com.sendgrid</groupId>
-			<artifactId>sendgrid-java</artifactId>
-			<version>4.9.3</version>
 		</dependency>
 
 		<!-- PostGreSQL -->

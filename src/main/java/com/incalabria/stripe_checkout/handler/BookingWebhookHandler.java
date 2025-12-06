@@ -4,7 +4,7 @@ import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
 import com.incalabria.stripe_checkout.data.booking.Others;
 import com.incalabria.stripe_checkout.extractor.BookingWebhookDataExtractor;
 import com.incalabria.stripe_checkout.service.GiftCardService;
-import com.incalabria.stripe_checkout.service.SendGridEmailService;
+import com.incalabria.stripe_checkout.service.EmailService;
 import com.stripe.model.checkout.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ public class BookingWebhookHandler {
     private BookingWebhookDataExtractor dataExtractor;
 
     @Autowired
-    private SendGridEmailService sendGridEmailService;
+    private EmailService emailService;
 
     @Autowired
     private GiftCardService giftCardService;
@@ -49,7 +49,7 @@ public class BookingWebhookHandler {
     private void sendAdminConfirmationEmail(BookingWebhookData data) throws IOException {
         String adminEmailText = buildAdminEmailText(data);
 
-        sendGridEmailService.sendEmail(adminEmail, "Pagamento autorizzato - Nuova prenotazione", adminEmailText);
+        emailService.sendEmail(adminEmail, "Pagamento autorizzato - Nuova prenotazione", adminEmailText);
         log.info("Admin confirmation email sent successfully");
     }
 
@@ -57,13 +57,13 @@ public class BookingWebhookHandler {
         String customerEmailText = buildCustomerEmailText(data);
 
         try {
-            sendGridEmailService.sendEmail(data.getCustomer().getEmail(),
+            emailService.sendEmail(data.getCustomer().getEmail(),
                     "Richiesta presa in carico",
                     customerEmailText);
             log.info("Customer confirmation email sent to: {}", data.getCustomer().getEmail());
         } catch (IOException e) {
             log.error("Failed to send customer confirmation email to: {}", data.getCustomer().getEmail(), e);
-            sendGridEmailService.sendEmail(adminEmail, "Errore di invio email al cliente",
+            emailService.sendEmail(adminEmail, "Errore di invio email al cliente",
                     String.format("Session ID: %s\nErrore: %s", data.getSessionId(), e.getMessage()));
             throw e;
         }
