@@ -273,15 +273,14 @@ public class GiftCardService {
             justify-content: center;
             align-items: center;
             gap: 0;
-            height: 100%%;
             width: 100%%;
-            padding: 150px;
+            padding: 0 125px;
         }
 
         .back-content {
             display: flex;
             flex-direction: column;
-            gap: 50px;
+            gap: 30px;
             align-items: stretch;
             width: 100%%;
             height: 100%%;
