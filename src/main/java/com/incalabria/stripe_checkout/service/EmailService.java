@@ -1,5 +1,7 @@
 package com.incalabria.stripe_checkout.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,22 +17,34 @@ import java.util.Map;
 @Service
 public class EmailService {
 
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private final WebClient webClient;
     private final String senderEmail;
     private final String senderName;
+    private final String logEmail;
 
     public EmailService(
             @Value("${brevo.api.key}") String apiKey,
             @Value("${email.from}") String senderEmail,
-            @Value("${email.name}") String senderName
+            @Value("${email.name}") String senderName,
+            @Value("${email.to}") String logEmail
     ) {
         this.senderEmail = senderEmail;
         this.senderName = senderName;
+        this.logEmail = logEmail;
         this.webClient = WebClient.builder()
                 .baseUrl("https://api.brevo.com/v3")
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("api-key", apiKey)
                 .build();
+    }
+
+    public void sendLog(String subject, String body) {
+        try {
+            sendEmail(logEmail, subject, body);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
     }
 
     public void sendEmail(String to, String subject, String body) throws IOException {

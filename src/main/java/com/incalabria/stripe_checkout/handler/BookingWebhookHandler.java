@@ -29,9 +29,6 @@ public class BookingWebhookHandler {
     @Autowired
     private GiftCardService giftCardService;
 
-    @Value("${email.to}")
-    private String adminEmail;
-
     public void handleBookingPurchase(Session session) throws IOException {
         log.info("Handling booking purchase for session: {}", session.getId());
 
@@ -49,7 +46,7 @@ public class BookingWebhookHandler {
     private void sendAdminConfirmationEmail(BookingWebhookData data) throws IOException {
         String adminEmailText = buildAdminEmailText(data);
 
-        emailService.sendEmail(adminEmail, "Pagamento autorizzato - Nuova prenotazione", adminEmailText);
+        emailService.sendLog( "Pagamento autorizzato - Nuova prenotazione", adminEmailText);
         log.info("Admin confirmation email sent successfully");
     }
 
@@ -63,7 +60,7 @@ public class BookingWebhookHandler {
             log.info("Customer confirmation email sent to: {}", data.getCustomer().getEmail());
         } catch (IOException e) {
             log.error("Failed to send customer confirmation email to: {}", data.getCustomer().getEmail(), e);
-            emailService.sendEmail(adminEmail, "Errore di invio email al cliente",
+            emailService.sendLog( "Errore di invio email al cliente",
                     String.format("Session ID: %s\nErrore: %s", data.getSessionId(), e.getMessage()));
             throw e;
         }

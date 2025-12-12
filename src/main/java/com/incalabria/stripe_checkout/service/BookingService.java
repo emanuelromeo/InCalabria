@@ -178,23 +178,57 @@ public class BookingService {
             String sessionId,
             String connectedAccountId,
             int providerPercentage
-    ) throws StripeException {
-        Session session = retrieveSession(sessionId);
+    ) throws RuntimeException {
+        Session session = null;
+        try {
+            session = retrieveSession(sessionId);
+        } catch (StripeException e) {
+            log.error(e.getMessage());
+            emailService.sendLog("Error in session retrieve", e.getMessage());
+            throw new RuntimeException(e);
+        }
         log.info("Session with ID {} successfully retrieved", sessionId);
 
-        PaymentIntent paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
+        PaymentIntent paymentIntent = null;
+        try {
+            paymentIntent = PaymentIntent.retrieve(session.getPaymentIntent());
+        } catch (StripeException e) {
+            log.error(e.getMessage());
+            emailService.sendLog("Error in payment intent retrieve", e.getMessage());
+            throw new RuntimeException(e);
+        }
         log.info("Payment Intent retrieved: {}", paymentIntent);
 
         // 1. Cattura il PaymentIntent (autorizzazione -> addebito effettivo)
-        paymentIntent = paymentIntent.capture(
-                PaymentIntentCaptureParams.builder().build()
-        );
+        try {
+            paymentIntent = paymentIntent.capture(
+                    PaymentIntentCaptureParams.builder().build()
+            );
+
+            // 1.1 Invia email di conferma al cliente
+            sendBookingConfirmationEmail(session);
+            emailService.sendLog("Email di conferma inviata", "L'email relativa alla sessione " + sessionId + " è stata correttamente inviata al cliente.");
+
+            // 1.2 Salva la booking come confermata, ecc.
+            BookingWebhookData bookingWebhookData = bookingWebhookDataExtractor.extractBookingData(session);
+            saveBooking(bookingWebhookData, connectedAccountId);
+            log.info("Booking successfully saved");
+
+        } catch (StripeException e) {
+            log.error(e.getMessage());
+            emailService.sendLog("Error in payment intent capture", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         log.info("Payment Intent successfully captured: {}", paymentIntent.getId());
 
         // 2. Prendi la charge associata (latest_charge)
         String chargeId = paymentIntent.getLatestCharge();
         if (chargeId == null) {
-            throw new IllegalStateException("No charge found on PaymentIntent " + paymentIntent.getId());
+            log.error("No charge found on PaymentIntent " + paymentIntent.getId());
+            emailService.sendLog("Error getting charge", "No charge found on PaymentIntent " + paymentIntent.getId());
+            return;
         }
         log.info("Latest charge ID: {}", chargeId);
 
@@ -212,13 +246,15 @@ public class BookingService {
                 .setSourceTransaction(chargeId) // collega il transfer a questa charge
                 .build();
 
-        Transfer transfer = Transfer.create(transferParams);
+        Transfer transfer = null;
+        try {
+            transfer = Transfer.create(transferParams);
+        } catch (StripeException e) {
+            log.error(e.getMessage());
+            emailService.sendLog("Error in transfer creation", e.getMessage());
+            throw new RuntimeException(e);
+        }
         log.info("Transfer created to provider {}: {}", connectedAccountId, transfer.getId());
-
-        // 5. Salva la booking come confermata, ecc.
-        BookingWebhookData bookingWebhookData = bookingWebhookDataExtractor.extractBookingData(session);
-        saveBooking(bookingWebhookData, connectedAccountId);
-        log.info("Booking successfully saved");
     }
 
 
@@ -235,7 +271,7 @@ public class BookingService {
 
     }
 
-    public void sendBookingConfirmationEmail(Session session) throws IOException {
+    private void sendBookingConfirmationEmail(Session session) throws IOException {
         if (session.getCustomerDetails() != null) {
             String customerEmail = session.getCustomerDetails().getEmail();
             String customerName = session.getCustomerDetails().getName();

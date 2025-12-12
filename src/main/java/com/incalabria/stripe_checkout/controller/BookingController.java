@@ -46,29 +46,13 @@ public class BookingController {
             @RequestParam String connectedAccountId,
             @RequestParam Integer providerPercentage
     ) {
-        Session session;
-
-        try {
-            session = bookingService.retrieveSession(sessionId);
-            log.info("Session with ID " + sessionId + " successfully retrieved");
-        } catch (StripeException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.status(400).body(e.getMessage());
-        }
 
         try {
             bookingService.capturePaymentIntentAndTransferToProvider(sessionId, connectedAccountId, providerPercentage);
             log.info("PaymentIntent captured successfully");
-        } catch (StripeException e) {
+        } catch (RuntimeException e) {
             log.error(e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());
-        }
-
-        try {
-            bookingService.sendBookingConfirmationEmail(session);
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.ok("PaymentIntent confirmed, but email couldn't be sent to customer");
         }
 
         return ResponseEntity.ok("PaymentIntent captured successfully.");
