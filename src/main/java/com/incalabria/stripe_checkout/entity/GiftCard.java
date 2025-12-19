@@ -17,6 +17,7 @@ public class GiftCard {
     private GiftCardType type;
     private String sender;
     private String receiver;
+    @Column(length = 500)
     private String message;
     private Double amount;
 
