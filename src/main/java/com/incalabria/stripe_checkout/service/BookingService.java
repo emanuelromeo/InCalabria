@@ -11,9 +11,11 @@ import com.incalabria.stripe_checkout.repository.BookingRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Payout;
 import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.PaymentIntentCaptureParams;
+import com.stripe.param.PayoutCreateParams;
 import com.stripe.param.TransferCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.slf4j.Logger;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -174,7 +177,7 @@ public class BookingService {
 //        log.info("Booking successfully saved");
 //    }
 
-    public void capturePaymentIntentAndTransferToProvider(
+    public void capturePaymentIntent(
             String sessionId,
             String connectedAccountId,
             int providerPercentage
@@ -199,19 +202,26 @@ public class BookingService {
         }
         log.info("Payment Intent retrieved: {}", paymentIntent);
 
-        // 1. Cattura il PaymentIntent (autorizzazione -> addebito effettivo)
+        // 3. Calcola la quota del fornitore e la quota InCalabria
+        long totalAmount = paymentIntent.getAmount(); // centesimi
+        long amountToProvider = Math.round(totalAmount * 0.96 * (providerPercentage / 100.0));
+        long amountToAdmin = Math.round(totalAmount * 0.96 - amountToProvider);
+        log.info("Total amount: " + totalAmount + " - amount to provider ("
+                + providerPercentage + "%): " + amountToProvider + " - amount to admin: " + amountToAdmin);
+
+        // 2. Cattura il PaymentIntent (autorizzazione -> addebito effettivo)
         try {
             paymentIntent = paymentIntent.capture(
                     PaymentIntentCaptureParams.builder().build()
             );
 
-            // 1.1 Invia email di conferma al cliente
+            // 2.1 Invia email di conferma al cliente
             sendBookingConfirmationEmail(session);
             emailService.sendLog("Email di conferma inviata", "L'email relativa alla sessione " + sessionId + " è stata correttamente inviata al cliente.");
 
-            // 1.2 Salva la booking come confermata, ecc.
+            // 2.2 Salva la booking come confermata, ecc.
             BookingWebhookData bookingWebhookData = bookingWebhookDataExtractor.extractBookingData(session);
-            saveBooking(bookingWebhookData, connectedAccountId);
+            saveBooking(bookingWebhookData, connectedAccountId, (double) amountToProvider / 100);
             log.info("Booking successfully saved");
 
         } catch (StripeException e) {
@@ -222,42 +232,31 @@ public class BookingService {
             throw new RuntimeException(e);
         }
         log.info("Payment Intent successfully captured: {}", paymentIntent.getId());
-
-        // 2. Prendi la charge associata (latest_charge)
-        String chargeId = paymentIntent.getLatestCharge();
-        if (chargeId == null) {
-            log.error("No charge found on PaymentIntent " + paymentIntent.getId());
-            emailService.sendLog("Error getting charge", "No charge found on PaymentIntent " + paymentIntent.getId());
-            return;
-        }
-        log.info("Latest charge ID: {}", chargeId);
-
-        // 3. Calcola la quota del fornitore
-        long totalAmount = paymentIntent.getAmount(); // centesimi
-        long amountToProvider = Math.round(totalAmount * 0.96 * (providerPercentage / 100.0));
-        log.info("Total amount: " + totalAmount + " - amount to provider ("
-                + providerPercentage + "%): " + amountToProvider);
-
-        // 4. Transfer verso il connected account
-        TransferCreateParams transferParams = TransferCreateParams.builder()
-                .setAmount(amountToProvider)
-                .setCurrency(paymentIntent.getCurrency())
-                .setDestination(connectedAccountId)
-                .setSourceTransaction(chargeId) // collega il transfer a questa charge
-                .build();
-
-        Transfer transfer = null;
-        try {
-            transfer = Transfer.create(transferParams);
-        } catch (StripeException e) {
-            log.error(e.getMessage());
-            emailService.sendLog("Error in transfer creation", e.getMessage());
-            throw new RuntimeException(e);
-        }
-        log.info("Transfer created to provider {}: {}", connectedAccountId, transfer.getId());
     }
 
+    public Payout createPlatformPayout(long amountInCents) throws StripeException {
 
+        PayoutCreateParams params = PayoutCreateParams.builder()
+                .setAmount(amountInCents)  // es. 10000 = 100,00 €
+                .setCurrency("eur")        // fisso in EUR
+                .build();
+
+        return Payout.create(params);
+    }
+
+    public Transfer transferToConnectedAccount(
+            long amountInCents,
+            String connectedAccountId
+    ) throws StripeException {
+
+        TransferCreateParams params = TransferCreateParams.builder()
+                .setAmount(amountInCents)          // es. 5000 = 50,00 €
+                .setCurrency("eur")                // fisso in EUR
+                .setDestination(connectedAccountId) // "acct_..."
+                .build();
+
+        return Transfer.create(params);
+    }
 
     public void cancelPaymentIntent(String sessionId) throws StripeException {
         Session session = retrieveSession(sessionId);
@@ -271,25 +270,164 @@ public class BookingService {
 
     }
 
+    public void sendContactEmailToSupplier(Booking b) throws IOException {
+        String emailText = String.format("""
+                    Ciao %s,
+                    
+                    ti inviamo i dati del cliente che parteciperà alla tua esperienza \"%s\" in data %s.
+                    Nome cliente: %s
+                    Telefono: %s
+                    Email: %s
+                    
+                    Ti chiediamo, se possibile, di contattarlo il prima possibile per confermare orario, luogo di ritrovo e dettagli operativi.
+                    
+                    Grazie per la collaborazione e per valorizzare con noi la Calabria.
+                    Il team di InCalabria
+                    """,
+                b.getSupplierName(),
+                b.getExperience(),
+                b.getExperienceDate().toString(),
+                b.getCustomerName(),
+                b.getCustomerNumber(),
+                b.getCustomerEmail());
+        try {
+        emailService.sendEmail(b.getSupplerEmail(), "Contatti del cliente | Esperienza del " + b.getExperienceDate(), emailText);
+        log.info("Contact email sent to supplier");
+        } catch (IOException e) {
+            throw new IOException("Error sending contact email to supplier.\nEmail content:\n\n" + emailText);
+        }
+    }
+
+    public void sendContactEmailToCustomer(Booking b) throws IOException {
+        String emailText = String.format("""
+                    Ciao %s,
+                    
+                    manca poco alla tua esperienza \"%s\" e non vediamo l’ora che tu possa viverla!
+                    Ecco i contatti del fornitore che ti accoglierà e sarà il tuo punto di riferimento:
+                    Nome referente: %s
+                    Telefono: %s
+                    Email: %s
+                    
+                    Ti consigliamo di contattarlo il prima possibile per confermare orario, luogo di ritrovo ed eventuali dettagli utili.
+                    
+                    Se hai bisogno di supporto, siamo sempre qui per te.
+                    Buona esperienza!
+                    Il team di InCalabria
+                    """,
+                b.getCustomerName(),
+                b.getExperience(),
+                b.getSupplierName(),
+                b.getSupplierNumber(),
+                b.getSupplerEmail());
+
+        String emailTextEng = String.format("""
+                    Hi %s,
+                    
+                    your experience \"%s\" is just around the corner and we cannot wait for you to enjoy it!
+                    Here are the supplier’s contact details of the person who will welcome you and be your point of reference:
+                    Name: %s
+                    Phone: %s
+                    Email: %s
+                    
+                    We recommend contacting them as soon as possible to confirm the time, meeting point, and any useful details.
+                    
+                    If you need support, we're always here for you.
+                    Enjoy your experience!
+                    The InCalabria team
+                    """,
+                b.getCustomerName(),
+                b.getExperience(),
+                b.getSupplierName(),
+                b.getSupplierNumber(),
+                b.getSupplerEmail());
+        try {
+            emailService.sendEmail(b.getCustomerEmail(),
+                    (b.getLanguage().name().equals("ITA") ? "Contatti del fornitore | Esperienza del " : "Supplier contact details | Experience on ") + b.getExperienceDate(),
+                    b.getLanguage().name().equals("ITA") ? emailText : emailTextEng);
+            log.info("Contact email sent to customer");
+        } catch (IOException e) {
+            throw new IOException("Error sending contact email to customer.\nEmail content:\n\n" + (b.getLanguage().name().equals("ITA") ? emailText : emailTextEng));
+        }
+    }
+
+    public void sendReviewEmail(Booking b) throws IOException {
+        String emailText = String.format("""
+                    Ciao %s,
+                    
+                    speriamo che la tua esperienza con InCalabria sia stata speciale e che ti abbia fatto scoprire un nuovo pezzo di questa terra meravigliosa.
+                    
+                    Ci farebbe piacere sapere com’è andata!
+                    La tua opinione è preziosa sia per noi che per i viaggiatori che verranno dopo di te.
+                    
+                    Lascia la tua recensione qui: https://tally.so/r/n9LYpE
+                    
+                    Grazie per aver scelto di vivere la Calabria con noi.
+                    A presto!
+                    Il team di InCalabria
+                    """,
+                b.getCustomerName());
+
+        String emailTextEng = String.format("""
+                    Hi %s,
+                    
+                    we hope your experience with InCalabria was special and helped you discover a new piece of this wonderful land.
+                    
+                    We would love to know how it went!
+                    Your opinion is valuable both for us and for the travellers who will come after you.
+                    
+                    Leave your review here: https://tally.so/r/wAoYje
+                    
+                    Thank you for choosing to experience Calabria with us.
+                    See you soon!
+                    The InCalabria team
+                    """,
+                b.getCustomerName());
+
+        emailService.sendEmail(b.getCustomerEmail(),
+                b.getLanguage().name().equals("ITA") ? "Com'è andata la tua esperienza InCalabria?" : "How was your InCalabria experience?",
+                b.getLanguage().name().equals("ITA") ? emailText : emailTextEng);
+        log.info("Review email sent to customer");
+    }
+
     private void sendBookingConfirmationEmail(Session session) throws IOException {
         if (session.getCustomerDetails() != null) {
             String customerEmail = session.getCustomerDetails().getEmail();
             String customerName = session.getCustomerDetails().getName();
             double amount = (double) session.getAmountTotal() / 100;
             String experience = session.getMetadata().get("experience");
+            String language = session.getMetadata().get("language");
+
             String emailText = String.format("""
                     Ciao %s,
                     
                     siamo felici di confermare la tua prenotazione con InCalabria!
                     Il pagamento di %.2f€ è andato a buon fine e la tua esperienza \"%s\" è ufficialmente prenotata.
                     
+                    Riceverai un'altra email con maggiorni informazioni su luogo e orario di incontro e i contatti del fornitore tre giorni prima dell'esperienza.
                     Nel frattempo, se hai domande o desideri personalizzare la tua esperienza, puoi contattarci rispondendo a questa mail o scrivendoci su whatsapp al numero +39 3333286692.
                     Preparati a vivere la Calabria più autentica, tra mare, natura e tradizioni locali.
                     
                     A presto,
                     Il team di InCalabria
                     """, customerName, amount, experience);
-            emailService.sendEmail(customerEmail, "Prenotazione confermata!", emailText);
+
+            String emailTextEng = String.format("""
+                    Hi %s,
+                    
+                    we are happy to confirm your booking with InCalabria!
+                    The payment of %.2f€ was successful and your experience \"%s\" is officially booked.
+                    
+                    You will receive another email with more information on the meeting place and time and the supplier’s contacts three days before the experience.
+                    In the meantime, if you have any questions or wish to customize your experience, you can contact us by replying to this email or writing to us on WhatsApp at +39 3333286692.
+                    Get ready to experience the most authentic Calabria, between sea, nature and local traditions.
+                    
+                    See you soon,
+                    The InCalabria Team
+                    """, customerName, amount, experience);
+
+            emailService.sendEmail(customerEmail,
+                    language.equals("ITA") ? "Prenotazione confermata!" : "Booking confirmed!",
+                    language.equals("ITA") ? emailText : emailTextEng);
             log.info("Confirmation email sent to the customer");
         }
     }
@@ -299,6 +437,8 @@ public class BookingService {
             String customerEmail = session.getCustomerDetails().getEmail();
             String customerName = session.getCustomerDetails().getName();
             String experience = session.getMetadata().get("experience");
+            String language = session.getMetadata().get("language");
+
             String emailText = String.format("""
                     Ciao %s,
                     
@@ -312,24 +452,48 @@ public class BookingService {
                     Grazie ancora per la fiducia,
                     Il team di InCalabria
                     """, customerName, experience);
-            emailService.sendEmail(customerEmail, "Richiesta rifiutata", emailText);
+
+            String emailTextEng = String.format("""
+                    Hi %s,
+                    
+                    thank you for choosing InCalabria and for your interest in our experiences.
+                    Unfortunately, at this time we are unable to confirm your request for the experience \"%s\" due to lack of availability.
+                    We are truly sorry for the inconvenience, but we hope to welcome you soon in one of our other activities.
+                   
+                    We invite you to check our website [www.incalabria.net](https://www.incalabria.net) to discover other experiences available on the same dates or in alternative periods.
+                    For any doubts or requests, you can write to us on WhatsApp at +39 3333286692; we will be happy to help you find an alternative.
+                   
+                    Thank you again for your trust,
+                    The InCalabria Team
+                    """, customerName, experience);
+
+            emailService.sendEmail(customerEmail,
+                    language.equals("ITA") ? "Richiesta rifiutata" : "Request denied",
+                    language.equals("ITA") ? emailText : emailTextEng);
             log.info("Cancellation email sent to the customer");
         }
     }
 
-    public void saveBooking(BookingWebhookData data, String connectedAccountId) throws StripeException {
+    public void saveBooking(BookingWebhookData data, String connectedAccountId, double supplierAmount) throws StripeException {
         Booking b = new Booking();
         b.setSessionId(data.getSessionId());
+        b.setExperience(data.getExperience());
+        b.setTotalAmount(data.getTotal());
+        b.setSupplierAmount(supplierAmount);
         b.setCustomerEmail(data.getCustomer().getEmail());
         b.setCustomerName(data.getCustomer().getName());
         b.setCustomerNumber(data.getCustomer().getPhone());
         b.setExperienceDate(LocalDate.parse(data.getDate()));
         b.setLanguage(data.getLanguage());
         b.setReviewEmailSent(false);
+        b.setContactEmailSent(false);
+        b.setTransferSent(false);
+        b.setPayoutSent(false);
         Account connectedAccount = Account.retrieve(connectedAccountId);
         b.setSupplerEmail(connectedAccount.getEmail());
         b.setSupplierName(connectedAccount.getBusinessProfile().getName());
         b.setSupplierNumber(connectedAccount.getBusinessProfile().getSupportPhone());
+        b.setSupplierId(connectedAccountId);
         bookingRepository.save(b);
     }
 

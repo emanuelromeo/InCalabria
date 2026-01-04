@@ -3,7 +3,8 @@ package com.incalabria.stripe_checkout.controller;
 import com.incalabria.stripe_checkout.data.booking.BookingWebhookData;
 import com.incalabria.stripe_checkout.service.BookingService;
 import com.stripe.exception.StripeException;
-import com.stripe.model.PaymentIntent;
+import com.stripe.model.Payout;
+import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ public class BookingController {
     ) {
 
         try {
-            bookingService.capturePaymentIntentAndTransferToProvider(sessionId, connectedAccountId, providerPercentage);
+            bookingService.capturePaymentIntent(sessionId, connectedAccountId, providerPercentage);
             log.info("PaymentIntent captured successfully");
         } catch (RuntimeException e) {
             log.error(e.getMessage());
@@ -87,5 +88,4 @@ public class BookingController {
 
         return ResponseEntity.ok("PaymentIntent cancelled successfully.");
     }
-
 }

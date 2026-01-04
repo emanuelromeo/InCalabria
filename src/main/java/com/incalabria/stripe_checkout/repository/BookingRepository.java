@@ -7,5 +7,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-    List<Booking> findByExperienceDateAndReviewEmailSentFalse(LocalDate date);
+    List<Booking> findByExperienceDateLessThanEqualAndReviewEmailSentFalse(LocalDate date);
+    List<Booking> findByExperienceDateLessThanEqualAndTransferSentFalse(LocalDate date);
+    List<Booking> findByExperienceDateLessThanEqualAndPayoutSentFalse(LocalDate date);
+    List<Booking> findByExperienceDateLessThanEqualAndContactEmailSentFalse(LocalDate date);
 }
