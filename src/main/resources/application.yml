@@ -2,12 +2,12 @@ spring:
   application:
     name: stripe-checkout
   datasource:
-    url: jdbc:postgresql://aws-1-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require
+    url: jdbc:postgresql://aws-1-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require&connect_timeout=30
     username: postgres.cadqqprndmbbwowcgnhm
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 15 #30 su Render e 40 ( 30 + 10 ) su Supabase
+      maximum-pool-size: 5 #30 su Render e 40 ( 30 + 10 ) su Supabase
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
