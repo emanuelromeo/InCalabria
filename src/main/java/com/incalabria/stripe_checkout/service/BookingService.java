@@ -271,6 +271,11 @@ public class BookingService {
     }
 
     public void sendContactEmailToSupplier(Booking b) throws IOException {
+
+        if (b.getCustomerNumber() == null || b.getCustomerEmail() == null) {
+            throw new NullPointerException("Missing customer info");
+        }
+
         String emailText = String.format("""
                     Ciao %s,
                     
@@ -299,6 +304,11 @@ public class BookingService {
     }
 
     public void sendContactEmailToCustomer(Booking b) throws IOException {
+
+        if (b.getSupplierNumber() == null || b.getSupplerEmail() == null) {
+            throw new NullPointerException("Missing supplier info");
+        }
+
         String emailText = String.format("""
                     Ciao %s,
                     

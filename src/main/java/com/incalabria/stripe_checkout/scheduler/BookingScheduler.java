@@ -42,7 +42,7 @@ public class BookingScheduler {
                 bookingService.transferToConnectedAccount((long) (b.getSupplierAmount() * 100), b.getSupplierId());
                 b.setTransferSent(true);
                 bookingRepository.save(b);
-            } catch (StripeException e) {
+            } catch (Exception e) {
                 log.error(e.getMessage());
                 emailService.sendLog("Error in transfer to account: " + b.getSupplierId(), e.getMessage());
             }
@@ -57,7 +57,7 @@ public class BookingScheduler {
                 bookingService.createPlatformPayout((long) ((b.getTotalAmount() - b.getSupplierAmount()) * 100));
                 b.setPayoutSent(true);
                 bookingRepository.save(b);
-            } catch (StripeException e) {
+            } catch (Exception e) {
                 log.error(e.getMessage());
                 emailService.sendLog("Error in payout for session: " + b.getSessionId(), e.getMessage());
             }
@@ -74,7 +74,7 @@ public class BookingScheduler {
                 bookingService.sendContactEmailToSupplier(b);
                 b.setContactEmailSent(true);
                 bookingRepository.save(b);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error(e.getMessage());
                 emailService.sendLog("Error sending contact email", e.getMessage());
             }
@@ -89,7 +89,7 @@ public class BookingScheduler {
                 bookingService.sendReviewEmail(b);
                 b.setReviewEmailSent(true);
                 bookingRepository.save(b);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error(e.getMessage());
                 emailService.sendLog("Error sending review email to " + b.getCustomerEmail(), e.getMessage());
             }
