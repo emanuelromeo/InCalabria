@@ -131,6 +131,7 @@ public class BookingService {
                 .addLineItem(baseItem)
                 .addLineItem(commissionItem)
                 .setMode(SessionCreateParams.Mode.PAYMENT)
+                .setCustomerCreation(SessionCreateParams.CustomerCreation.ALWAYS)
                 .addCustomField(
                         SessionCreateParams.CustomField.builder()
                                 .setKey("taxId")
