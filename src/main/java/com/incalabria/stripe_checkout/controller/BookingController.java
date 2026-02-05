@@ -41,6 +41,19 @@ public class BookingController {
         return ResponseEntity.ok(Map.of("url", session.getUrl()));
     }
 
+    @PostMapping("/payment/create-checkout-session")
+    public ResponseEntity<Map<String, String>> createPaymentCheckoutSession(@RequestBody Map<String, String> body) {
+        Session session;
+        try {
+            session = bookingService.createPaymentCheckoutSession(body);
+        } catch (StripeException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+        log.info("Checkout session correctly built!");
+        return ResponseEntity.ok(Map.of("url", session.getUrl()));
+    }
+
     @PostMapping("/capture-payment-intent")
     public ResponseEntity<String> capturePaymentIntent(
             @RequestParam String sessionId,

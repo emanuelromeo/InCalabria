@@ -159,6 +159,60 @@ public class BookingService {
         return Session.create(params);
     }
 
+    // To take money without booking
+    public Session createPaymentCheckoutSession(Map<String, String> body) throws StripeException {
+
+        long baseAmountInCents = (long) (Double.parseDouble(body.get("amount")) * 100);
+
+        // Riga esperienza principale
+        SessionCreateParams.LineItem baseItem = SessionCreateParams.LineItem.builder()
+                .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                        .setCurrency("eur")
+                        .setUnitAmount(baseAmountInCents)
+                        .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                .setName(body.get("name"))
+                                .build())
+                        .build())
+                .setQuantity(1L)
+                .build();
+
+        SessionCreateParams.PaymentIntentData paymentIntentData = SessionCreateParams.PaymentIntentData.builder()
+                .setCaptureMethod(SessionCreateParams.PaymentIntentData.CaptureMethod.AUTOMATIC)
+                .build();
+
+        String successUrl = appDomain + "/payment/success";
+        String cancelUrl = appDomain + "/";
+
+        SessionCreateParams params = SessionCreateParams.builder()
+                .addLineItem(baseItem)
+                .setMode(SessionCreateParams.Mode.PAYMENT)
+                .setCustomerCreation(SessionCreateParams.CustomerCreation.ALWAYS)
+                .addCustomField(
+                        SessionCreateParams.CustomField.builder()
+                                .setKey("taxId")
+                                .setLabel(
+                                        SessionCreateParams.CustomField.Label.builder()
+                                                .setType(SessionCreateParams.CustomField.Label.Type.CUSTOM)
+                                                .setCustom("Codice Fiscale (o P.IVA)")
+                                                .build()
+                                )
+                                .setType(SessionCreateParams.CustomField.Type.TEXT)
+                                .build()
+                )
+                .setPhoneNumberCollection(SessionCreateParams.PhoneNumberCollection.builder().setEnabled(true).build())
+                .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
+                .setPaymentIntentData(paymentIntentData)
+                .setSuccessUrl(successUrl)
+                .setCancelUrl(cancelUrl)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.PAYPAL)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.KLARNA)
+                .build();
+
+        log.info("Building checkout session...");
+        return Session.create(params);
+    }
+
     public Session retrieveSession(String sessionId) throws StripeException {
         return Session.retrieve(sessionId);
     }
