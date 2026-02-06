@@ -55,7 +55,7 @@ public class BookingWebhookHandler {
 
         try {
             emailService.sendEmail(data.getCustomer().getEmail(),
-                    "Richiesta presa in carico",
+                    data.getLanguage().name().equals("ITA") ? "Richiesta presa in carico" : "Request received",
                     customerEmailText);
             log.info("Customer confirmation email sent to: {}", data.getCustomer().getEmail());
         } catch (IOException e) {
@@ -102,17 +102,18 @@ public class BookingWebhookHandler {
     }
 
     private String buildCustomerEmailText(BookingWebhookData data) {
-        String timeDisplay = convertTimeToItalian(data.getTime());
+        boolean isItalian = data.getLanguage() == null || data.getLanguage().name().equals("ITA");
+        String timeDisplay = isItalian ? convertTimeToItalian(data.getTime()) : convertTimeToEnglish(data.getTime());
         String optionalsText = data.hasOtherRequests() ?
-                String.format("• Altre richieste: %s\n", data.getOthers().stream()
+                String.format(isItalian ? "• Altre richieste: %s\n" : "• Other requests: %s\n", data.getOthers().stream()
                         .map(Others::getName)
                         .collect(Collectors.joining(", "))) :
                 "";
         String needsText = data.hasNeeds() ?
-                String.format("• Esigenze particolari: %s\n", data.getNeeds()) :
+                String.format(isItalian ? "• Esigenze particolari: %s\n" : "• Special requirements: %s\n", data.getNeeds()) :
                 "";
 
-        return String.format("""
+        return String.format(isItalian ? """
                 Ciao %s,
                 
                 grazie per aver scelto InCalabria!
@@ -133,6 +134,27 @@ public class BookingWebhookHandler {
                 
                 A presto,
                 Il team di InCalabria
+                """ : """
+                Hi %s,
+                
+                thank you for choosing InCalabria!
+                We have received your booking request and our team is currently reviewing it.
+                
+                Request details:
+                • Experience: %s
+                • Date: %s
+                %s• Number of participants: %s
+                %s%s
+                What happens next:
+                • Your request is pending approval.
+                • We will send you a confirmation email as soon as the experience is confirmed and the payment is processed securely.
+                • No charges will be made until you receive our confirmation.
+                
+                In the meantime, if you would like to change the date or have any questions about the experience, you can contact us by replying to this email or by texting us on WhatsApp at +39 3333286692.
+                We look forward to helping you experience the most authentic Calabria, among nature and traditions.
+                
+                See you soon,
+                The InCalabria team
                 """,
                 data.getCustomer().getName(),
                 data.getExperience(),
@@ -150,6 +172,17 @@ public class BookingWebhookHandler {
         return switch (time) {
             case "morning" -> "• Orario: mattina\n";
             case "afternoon" -> "• Orario: pomeriggio\n";
+            default -> "";
+        };
+    }
+
+    private String convertTimeToEnglish(String time) {
+        if (time == null) {
+            return "";
+        }
+        return switch (time) {
+            case "morning" -> "• Time: morning\n";
+            case "afternoon" -> "• Time: afternoon\n";
             default -> "";
         };
     }
