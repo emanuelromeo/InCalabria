@@ -25,6 +25,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -416,6 +418,11 @@ public class BookingService {
     }
 
     public void sendReviewEmail(Booking b) throws IOException {
+
+        // encode experience name
+        String encodedExperience = URLEncoder.encode(b.getExperience(), StandardCharsets.UTF_8);
+        encodedExperience = encodedExperience.replace("+", "%20");
+
         String emailText = String.format("""
                     Ciao %s,
                     
@@ -431,7 +438,7 @@ public class BookingService {
                     Il team di InCalabria
                     """,
                 b.getCustomerName(),
-                b.getExperience());
+                encodedExperience);
 
         String emailTextEng = String.format("""
                     Hi %s,
@@ -448,7 +455,7 @@ public class BookingService {
                     The InCalabria team
                     """,
                 b.getCustomerName(),
-                b.getExperience());
+                encodedExperience);
 
         emailService.sendEmail(b.getCustomerEmail(),
                 b.getLanguage().name().equals("ITA") ? "Com'è andata la tua esperienza InCalabria?" : "How was your InCalabria experience?",
