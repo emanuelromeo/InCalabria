@@ -424,13 +424,14 @@ public class BookingService {
                     Ci farebbe piacere sapere com’è andata!
                     La tua opinione è preziosa sia per noi che per i viaggiatori che verranno dopo di te.
                     
-                    Lascia la tua recensione qui: https://tally.so/r/n9LYpE
+                    Lascia la tua recensione qui: https://tally.so/r/n9LYpE?experience_name=%s
                     
                     Grazie per aver scelto di vivere la Calabria con noi.
                     A presto!
                     Il team di InCalabria
                     """,
-                b.getCustomerName());
+                b.getCustomerName(),
+                b.getExperience());
 
         String emailTextEng = String.format("""
                     Hi %s,
@@ -440,13 +441,14 @@ public class BookingService {
                     We would love to know how it went!
                     Your opinion is valuable both for us and for the travellers who will come after you.
                     
-                    Leave your review here: https://tally.so/r/wAoYje
+                    Leave your review here: https://tally.so/r/wAoYje?experience_name=%s
                     
                     Thank you for choosing to experience Calabria with us.
                     See you soon!
                     The InCalabria team
                     """,
-                b.getCustomerName());
+                b.getCustomerName(),
+                b.getExperience());
 
         emailService.sendEmail(b.getCustomerEmail(),
                 b.getLanguage().name().equals("ITA") ? "Com'è andata la tua esperienza InCalabria?" : "How was your InCalabria experience?",
